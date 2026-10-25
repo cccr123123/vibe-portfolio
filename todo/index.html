@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>待办事项 · 进阶版</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: rgba(255,255,255,.04);
+    --panel-2: rgba(255,255,255,.07);
+    --border: rgba(255,255,255,.1);
+    --text: #f5f5f7;
+    --muted: #9aa0aa;
+    --accent: #6366f1;
+    --accent-2: #22d3ee;
+    --grad: linear-gradient(135deg,#6366f1,#22d3ee);
+    --low: #34d399;
+    --mid: #fbbf24;
+    --high: #f87171;
+    --font: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 32px 20px 64px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 8px; }
+  h1 { font-size: 1.9rem; font-weight: 800; letter-spacing: -.01em; }
+  h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .subtitle { color: var(--muted); font-size: .9rem; margin-bottom: 22px; }
+  .back { font-size: .85rem; color: var(--muted); text-decoration: none; }
+  .back:hover { color: var(--accent-2); }
+
+  /* 统计条 */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .stat { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+  .stat b { font-size: 1.5rem; display: block; line-height: 1.2; }
+  .stat span { font-size: .76rem; color: var(--muted); }
+  .stat--accent b { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  /* 表单 */
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 16px; padding: 18px; }
+  .form-grid { display: grid; grid-template-columns: 2fr 2fr 1fr 1fr 1.2fr auto; gap: 10px; align-items: end; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: .74rem; color: var(--muted); letter-spacing: .04em; }
+  input, select, textarea {
+    font: inherit; font-size: .9rem; color: var(--text);
+    background: rgba(255,255,255,.05); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 12px; outline: none; width: 100%;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,.16); }
+  select option { background: #17171c; }
+  .btn {
+    font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer;
+    border: none; border-radius: 10px; padding: 11px 20px; white-space: nowrap;
+    background: var(--grad); color: #06111a; transition: transform .2s ease, filter .2s ease;
+  }
+  .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+  .btn--ghost { background: rgba(255,255,255,.07); color: var(--text); border: 1px solid var(--border); }
+  .btn--sm { padding: 7px 12px; font-size: .8rem; border-radius: 8px; }
+
+  /* 筛选栏 */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0 16px; align-items: center; }
+  .seg { display: inline-flex; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 3px; }
+  .seg button {
+    font: inherit; font-size: .82rem; cursor: pointer; border: none; background: transparent;
+    color: var(--muted); padding: 7px 14px; border-radius: 8px; transition: all .2s ease;
+  }
+  .seg button.is-active { background: rgba(255,255,255,.1); color: var(--text); }
+  .toolbar input[type=search] { max-width: 220px; }
+  .toolbar select { max-width: 130px; }
+
+  /* 列表 */
+  .todo-list { display: flex; flex-direction: column; gap: 10px; }
+  .todo {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px;
+    transition: border-color .2s ease, background .2s ease, opacity .2s ease;
+    animation: rise .3s ease;
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+  .todo:hover { border-color: rgba(99,102,241,.45); background: var(--panel-2); }
+  .todo.is-done { opacity: .55; }
+  .todo.is-done .todo__title { text-decoration: line-through; }
+  .todo__check {
+    width: 20px; height: 20px; flex: none; margin-top: 3px; cursor: pointer;
+    border-radius: 6px; border: 1.5px solid var(--border); background: transparent;
+    display: grid; place-items: center; color: transparent; font-size: .75rem; transition: all .2s ease;
+  }
+  .todo__check:hover { border-color: var(--accent-2); }
+  .todo.is-done .todo__check { background: var(--grad); border-color: transparent; color: #06111a; }
+  .todo__main { flex: 1; min-width: 0; }
+  .todo__title { font-size: .96rem; font-weight: 600; word-break: break-word; }
+  .todo__desc { font-size: .82rem; color: var(--muted); margin-top: 2px; word-break: break-word; }
+  .todo__meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; align-items: center; }
+  .chip {
+    font-size: .72rem; padding: 2px 9px; border-radius: 999px;
+    background: rgba(255,255,255,.06); border: 1px solid var(--border); color: var(--muted);
+  }
+  .chip--low { color: var(--low); border-color: rgba(52,211,153,.35); }
+  .chip--mid { color: var(--mid); border-color: rgba(251,191,36,.35); }
+  .chip--high { color: var(--high); border-color: rgba(248,113,113,.35); }
+  .chip--due { color: var(--accent-2); border-color: rgba(34,211,238,.3); }
+  .chip--overdue { color: #fca5a5; border-color: rgba(248,113,113,.5); }
+  .todo__actions { display: flex; gap: 6px; flex: none; }
+  .icon-btn {
+    width: 30px; height: 30px; border-radius: 8px; cursor: pointer; font-size: .85rem;
+    background: rgba(255,255,255,.05); border: 1px solid var(--border); color: var(--muted);
+    transition: all .2s ease;
+  }
+  .icon-btn:hover { color: var(--text); border-color: var(--accent); }
+  .icon-btn--danger:hover { color: #fca5a5; border-color: var(--high); }
+  .empty { text-align: center; color: var(--muted); padding: 46px 0; font-size: .9rem; }
+  .empty span { display: block; font-size: 2rem; margin-bottom: 8px; }
+
+  /* 编辑弹层 */
+  dialog {
+    border: 1px solid var(--border); border-radius: 18px; padding: 24px; width: min(520px, 92vw);
+    background: #131317; color: var(--text); font-family: var(--font);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.7); backdrop-filter: blur(4px); }
+  dialog h2 { font-size: 1.1rem; margin-bottom: 16px; }
+  .dialog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dialog-grid .field--full { grid-column: 1 / -1; }
+  dialog textarea { resize: vertical; min-height: 68px; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+  @media (max-width: 820px) {
+    .form-grid { grid-template-columns: 1fr 1fr; }
+    .form-grid .field--wide { grid-column: 1 / -1; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .toolbar input[type=search] { max-width: none; flex: 1 1 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>待办事项 <span>进阶版</span></h1>
+    <a class="back" href="../index.html">← 返回作品集</a>
+  </header>
+  <p class="subtitle">分类 · 优先级 · 截止日期 · 搜索筛选 · 本地持久化</p>
+
+  <div class="stats">
+    <div class="stat stat--accent"><b id="statTotal">0</b><span>全部任务</span></div>
+    <div class="stat"><b id="statPending">0</b><span>未完成</span></div>
+    <div class="stat"><b id="statDone">0</b><span>已完成</span></div>
+    <div class="stat"><b id="statRate">0%</b><span>完成率</span></div>
+  </div>
+
+  <form class="card" id="addForm">
+    <div class="form-grid">
+      <div class="field field--wide">
+        <label for="fTitle">标题 *</label>
+        <input id="fTitle" required maxlength="80" placeholder="要做什么？" autocomplete="off" />
+      </div>
+      <div class="field field--wide">
+        <label for="fDesc">描述</label>
+        <input id="fDesc" maxlength="200" placeholder="补充说明（可选）" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="fCat">分类</label>
+        <select id="fCat">
+          <option>工作</option><option>学习</option><option>生活</option><option>其他</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fPri">优先级</label>
+        <select id="fPri">
+          <option value="low">低</option><option value="mid" selected>中</option><option value="high">高</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="fDue">截止日期</label>
+        <input id="fDue" type="date" />
+      </div>
+      <button class="btn" type="submit">＋ 添加</button>
+    </div>
+  </form>
+
+  <div class="toolbar">
+    <div class="seg" id="segStatus">
+      <button data-status="all" class="is-active">全部</button>
+      <button data-status="pending">未完成</button>
+      <button data-status="done">已完成</button>
+    </div>
+    <select id="filCat">
+      <option value="">全部分类</option>
+      <option>工作</option><option>学习</option><option>生活</option><option>其他</option>
+    </select>
+    <select id="filPri">
+      <option value="">全部优先级</option>
+      <option value="high">高</option><option value="mid">中</option><option value="low">低</option>
+    </select>
+    <input id="search" type="search" placeholder="搜索标题或描述…" />
+  </div>
+
+  <div class="todo-list" id="list"></div>
+</div>
+
+<!-- 编辑弹层 -->
+<dialog id="editDialog">
+  <h2>编辑任务</h2>
+  <div class="dialog-grid">
+    <div class="field field--full">
+      <label for="eTitle">标题 *</label>
+      <input id="eTitle" required maxlength="80" />
+    </div>
+    <div class="field field--full">
+      <label for="eDesc">描述</label>
+      <textarea id="eDesc" maxlength="200"></textarea>
+    </div>
+    <div class="field">
+      <label for="eCat">分类</label>
+      <select id="eCat"><option>工作</option><option>学习</option><option>生活</option><option>其他</option></select>
+    </div>
+    <div class="field">
+      <label for="ePri">优先级</label>
+      <select id="ePri"><option value="low">低</option><option value="mid">中</option><option value="high">高</option></select>
+    </div>
+    <div class="field">
+      <label for="eDue">截止日期</label>
+      <input id="eDue" type="date" />
+    </div>
+  </div>
+  <div class="dialog-actions">
+    <button class="btn btn--ghost" type="button" id="cancelEdit">取消</button>
+    <button class="btn" type="button" id="saveEdit">保存</button>
+  </div>
+</dialog>
+
+<script>
+/* ================= 数据层 ================= */
+const STORAGE_KEY = "vibe_todo_v1";
+
+/** @typedef {{id:string,title:string,description:string,category:string,priority:"low"|"mid"|"high",dueDate:string,completed:boolean,createdAt:number}} Todo */
+
+const Store = {
+  load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  },
+  save(list) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  },
+};
+
+let todos = Store.load();
+
+/* ================= 状态 ================= */
+let filters = { status: "all", category: "", priority: "", keyword: "" };
+let editingId = null;
+
+/* ================= 工具函数 ================= */
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+const PRI_LABEL = { low: "低", mid: "中", high: "高" };
+const PRI_WEIGHT = { high: 0, mid: 1, low: 2 };
+
+const fmtDate = (val) => {
+  if (!val) return "";
+  const d = new Date(val + "T00:00:00");
+  if (isNaN(d)) return val;
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+};
+
+const isOverdue = (t) => {
+  if (!t.dueDate || t.completed) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return new Date(t.dueDate + "T00:00:00") < today;
+};
+
+/* ================= 渲染 ================= */
+const listEl = document.getElementById("list");
+
+function getVisibleTodos() {
+  const kw = filters.keyword.trim().toLowerCase();
+
+  return todos
+    .filter((t) => {
+      if (filters.status === "pending" && t.completed) return false;
+      if (filters.status === "done" && !t.completed) return false;
+      if (filters.category && t.category !== filters.category) return false;
+      if (filters.priority && t.priority !== filters.priority) return false;
+      if (kw) {
+        const hay = (t.title + " " + t.description).toLowerCase();
+        if (!hay.includes(kw)) return false;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.completed !== b.completed) return a.completed ? 1 : -1;
+      const w = PRI_WEIGHT[a.priority] - PRI_WEIGHT[b.priority];
+      if (w !== 0) return w;
+      if (a.dueDate && b.dueDate) return a.dueDate.localeCompare(b.dueDate);
+      if (a.dueDate) return -1;
+      if (b.dueDate) return 1;
+      return b.createdAt - a.createdAt;
+    });
+}
+
+function render() {
+  const visible = getVisibleTodos();
+
+  listEl.innerHTML = "";
+
+  if (visible.length === 0) {
+    listEl.innerHTML =
+      '<div class="empty"><span>🗒️</span>没有符合条件的任务' +
+      (todos.length === 0 ? "，先在上方添加一个吧～" : "，换个筛选条件试试") +
+      "</div>";
+  } else {
+    const frag = document.createDocumentFragment();
+    visible.forEach((t) => frag.appendChild(createTodoEl(t)));
+    listEl.appendChild(frag);
+  }
+
+  renderStats();
+}
+
+function createTodoEl(t) {
+  const el = document.createElement("article");
+  el.className = "todo" + (t.completed ? " is-done" : "");
+
+  const overdue = isOverdue(t);
+
+  el.innerHTML = `
+    <button class="todo__check" data-act="toggle" aria-label="标记完成" aria-pressed="${t.completed}">✓</button>
+    <div class="todo__main">
+      <p class="todo__title"></p>
+      ${t.description ? '<p class="todo__desc"></p>' : ""}
+      <div class="todo__meta">
+        <span class="chip">${t.category}</span>
+        <span class="chip chip--${t.priority}">${PRI_LABEL[t.priority]}优先级</span>
+        ${t.dueDate ? `<span class="chip ${overdue ? "chip--overdue" : "chip--due"}">${overdue ? "已逾期 " : "截止 "}${fmtDate(t.dueDate)}</span>` : ""}
+      </div>
+    </div>
+    <div class="todo__actions">
+      <button class="icon-btn" data-act="edit" aria-label="编辑任务">✎</button>
+      <button class="icon-btn icon-btn--danger" data-act="delete" aria-label="删除任务">🗑</button>
+    </div>`;
+
+  // 用 textContent 防止 XSS
+  el.querySelector(".todo__title").textContent = t.title;
+  const descEl = el.querySelector(".todo__desc");
+  if (descEl) descEl.textContent = t.description;
+
+  el.querySelector('[data-act="toggle"]').addEventListener("click", () => toggleTodo(t.id));
+  el.querySelector('[data-act="edit"]').addEventListener("click", () => openEdit(t.id));
+  el.querySelector('[data-act="delete"]').addEventListener("click", () => deleteTodo(t.id));
+
+  return el;
+}
+
+function renderStats() {
+  const total = todos.length;
+  const done = todos.filter((t) => t.completed).length;
+  const pending = total - done;
+
+  document.getElementById("statTotal").textContent = total;
+  document.getElementById("statPending").textContent = pending;
+  document.getElementById("statDone").textContent = done;
+  document.getElementById("statRate").textContent =
+    total === 0 ? "0%" : Math.round((done / total) * 100) + "%";
+}
+
+/* ================= 增删改 ================= */
+function addTodo(data) {
+  todos.unshift({
+    id: uid(),
+    completed: false,
+    createdAt: Date.now(),
+    ...data,
+  });
+  persist();
+}
+
+function toggleTodo(id) {
+  const t = todos.find((x) => x.id === id);
+  if (!t) return;
+  t.completed = !t.completed;
+  persist();
+}
+
+function deleteTodo(id) {
+  todos = todos.filter((x) => x.id !== id);
+  persist();
+}
+
+function persist() {
+  Store.save(todos);
+  render();
+}
+
+/* ================= 表单事件 ================= */
+const addForm = document.getElementById("addForm");
+
+addForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+
+  const title = document.getElementById("fTitle").value.trim();
+  if (!title) return;
+
+  addTodo({
+    title,
+    description: document.getElementById("fDesc").value.trim(),
+    category: document.getElementById("fCat").value,
+    priority: document.getElementById("fPri").value,
+    dueDate: document.getElementById("fDue").value,
+  });
+
+  addForm.reset();
+  document.getElementById("fCat").value = "工作";
+  document.getElementById("fPri").value = "mid";
+  document.getElementById("fTitle").focus();
+});
+
+/* ================= 筛选事件 ================= */
+document.getElementById("segStatus").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-status]");
+  if (!btn) return;
+  filters.status = btn.dataset.status;
+  document.querySelectorAll("#segStatus button").forEach((b) => {
+    b.classList.toggle("is-active", b === btn);
+  });
+  render();
+});
+
+document.getElementById("filCat").addEventListener("change", (e) => {
+  filters.category = e.target.value;
+  render();
+});
+
+document.getElementById("filPri").addEventListener("change", (e) => {
+  filters.priority = e.target.value;
+  render();
+});
+
+document.getElementById("search").addEventListener("input", (e) => {
+  filters.keyword = e.target.value;
+  render();
+});
+
+/* ================= 编辑弹层 ================= */
+const dialog = document.getElementById("editDialog");
+
+function openEdit(id) {
+  const t = todos.find((x) => x.id === id);
+  if (!t) return;
+
+  editingId = id;
+  document.getElementById("eTitle").value = t.title;
+  document.getElementById("eDesc").value = t.description;
+  document.getElementById("eCat").value = t.category;
+  document.getElementById("ePri").value = t.priority;
+  document.getElementById("eDue").value = t.dueDate || "";
+
+  dialog.showModal();
+}
+
+document.getElementById("cancelEdit").addEventListener("click", () => dialog.close());
+
+document.getElementById("saveEdit").addEventListener("click", () => {
+  const t = todos.find((x) => x.id === editingId);
+  if (!t) return dialog.close();
+
+  const title = document.getElementById("eTitle").value.trim();
+  if (!title) {
+    document.getElementById("eTitle").focus();
+    return;
+  }
+
+  t.title = title;
+  t.description = document.getElementById("eDesc").value.trim();
+  t.category = document.getElementById("eCat").value;
+  t.priority = document.getElementById("ePri").value;
+  t.dueDate = document.getElementById("eDue").value;
+
+  dialog.close();
+  persist();
+});
+
+/* ================= 初始化 ================= */
+if (todos.length === 0) {
+  // 首次打开给几条示例，方便直观看到效果
+  const today = new Date();
+  const iso = (d) => d.toISOString().slice(0, 10);
+  const plus = (n) => new Date(today.getTime() + n * 86400000);
+
+  todos = [
+    { id: uid(), title: "完成个人作品集网站部署", description: "传 GitHub 后用 Vercel 部署一版", category: "工作", priority: "high", dueDate: iso(plus(1)), completed: false, createdAt: Date.now() },
+    { id: uid(), title: "复习 Vibe Coding 五步开发流程", description: "需求研究 → PRD → 技术设计 → AGENTS → 开发", category: "学习", priority: "mid", dueDate: iso(plus(3)), completed: false, createdAt: Date.now() - 1 },
+    { id: uid(), title: "去健身房", description: "", category: "生活", priority: "low", dueDate: iso(plus(0)), completed: true, createdAt: Date.now() - 2 },
+  ];
+  Store.save(todos);
+}
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>番茄钟</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: rgba(255,255,255,.04);
+    --border: rgba(255,255,255,.1);
+    --text: #f5f5f7;
+    --muted: #9aa0aa;
+    --work: #f97316;
+    --work-2: #fb7185;
+    --rest: #22d3ee;
+    --rest-2: #34d399;
+    --font: -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font); background: var(--bg); color: var(--text);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 32px 20px; -webkit-font-smoothing: antialiased;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background:
+      radial-gradient(560px 560px at 78% 12%, rgba(249,115,22,.16), transparent 65%),
+      radial-gradient(520px 520px at 18% 86%, rgba(34,211,238,.14), transparent 65%);
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 26px; }
+  .head h1 { font-size: 1.5rem; font-weight: 800; }
+  .head a { font-size: .82rem; color: var(--muted); text-decoration: none; }
+  .head a:hover { color: var(--rest); }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 26px;
+    padding: 30px 26px 26px; backdrop-filter: blur(10px);
+  }
+
+  /* 阶段标签 */
+  .phase-tabs {
+    display: inline-flex; padding: 4px; border-radius: 12px; margin-bottom: 24px;
+    background: rgba(255,255,255,.05); border: 1px solid var(--border);
+  }
+  .phase-tabs button {
+    font: inherit; font-size: .82rem; font-weight: 600; cursor: pointer;
+    border: none; background: transparent; color: var(--muted);
+    padding: 8px 18px; border-radius: 9px; transition: all .2s ease;
+  }
+  .phase-tabs button.is-active { color: #06111a; background: var(--grad, linear-gradient(135deg,#f97316,#fb7185)); }
+  .phase-tabs button[data-phase="work"].is-active { background: linear-gradient(135deg, var(--work), var(--work-2)); }
+  .phase-tabs button[data-phase="rest"].is-active { background: linear-gradient(135deg, var(--rest-2), var(--rest)); }
+
+  /* 圆环计时器 */
+  .dial { position: relative; width: min(320px, 78vw); aspect-ratio: 1; margin: 0 auto 8px; }
+  .dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .dial__track { fill: none; stroke: rgba(255,255,255,.08); stroke-width: 10; }
+  .dial__bar {
+    fill: none; stroke: url(#gradWork); stroke-width: 10; stroke-linecap: round;
+    transition: stroke-dashoffset .35s linear, stroke .3s ease;
+  }
+  .dial.rest .dial__bar { stroke: url(#gradRest); }
+  .dial__time {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+  }
+  .dial__time b {
+    font-size: clamp(2.8rem, 12vw, 4rem); font-weight: 800; line-height: 1;
+    font-variant-numeric: tabular-nums; letter-spacing: .02em;
+  }
+  .dial__time span { font-size: .78rem; color: var(--muted); letter-spacing: .16em; text-transform: uppercase; }
+
+  /* 主按钮 */
+  .controls { display: flex; justify-content: center; gap: 12px; margin: 18px 0 8px; }
+  .btn {
+    font: inherit; font-size: .95rem; font-weight: 700; cursor: pointer;
+    border: none; border-radius: 999px; padding: 14px 38px; color: #06111a;
+    background: linear-gradient(135deg, var(--work), var(--work-2));
+    transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+    box-shadow: 0 12px 30px -14px rgba(249,115,22,.9);
+  }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.06); }
+  .btn--ghost {
+    background: rgba(255,255,255,.06); color: var(--text);
+    border: 1px solid var(--border); box-shadow: none;
+    padding: 14px 24px; font-weight: 600;
+  }
+  .btn--ghost:hover { filter: none; background: rgba(255,255,255,.1); border-color: var(--rest); }
+
+  /* 设置 */
+  .settings {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border);
+  }
+  .settings label { display: flex; flex-direction: column; gap: 6px; font-size: .74rem; color: var(--muted); }
+  .settings input {
+    font: inherit; font-size: .88rem; color: var(--text); text-align: center;
+    background: rgba(255,255,255,.05); border: 1px solid var(--border);
+    border-radius: 9px; padding: 9px; outline: none; width: 100%;
+  }
+  .settings input:focus { border-color: var(--work); }
+
+  /* 统计 */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 22px; }
+  .stat { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 14px; padding: 14px; text-align: center; }
+  .stat b { display: block; font-size: 1.55rem; line-height: 1.25; font-variant-numeric: tabular-nums; }
+  .stat span { font-size: .72rem; color: var(--muted); }
+  .stat--hot b { background: linear-gradient(135deg, var(--work), var(--work-2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+  .dots { display: flex; gap: 7px; justify-content: center; margin-top: 18px; }
+  .dots i {
+    width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,.14);
+    transition: background .3s ease, box-shadow .3s ease;
+  }
+  .dots i.on { background: var(--work); box-shadow: 0 0 12px rgba(249,115,22,.85); }
+
+  .tip { text-align: center; font-size: .74rem; color: var(--muted); margin-top: 16px; }
+  .tip button {
+    background: none; border: none; color: var(--rest); cursor: pointer; font: inherit;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <h1>🍅 番茄钟</h1>
+    <a href="../index.html">← 返回作品集</a>
+  </div>
+
+  <div class="card">
+    <div class="phase-tabs" id="phaseTabs">
+      <button data-phase="work" class="is-active">专注</button>
+      <button data-phase="rest">休息</button>
+    </div>
+
+    <div class="dial" id="dial">
+      <svg viewBox="0 0 200 200" aria-hidden="true">
+        <defs>
+          <linearGradient id="gradWork" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#f97316" /><stop offset="100%" stop-color="#fb7185" />
+          </linearGradient>
+          <linearGradient id="gradRest" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#34d399" /><stop offset="100%" stop-color="#22d3ee" />
+          </linearGradient>
+        </defs>
+        <circle class="dial__track" cx="100" cy="100" r="88" />
+        <circle class="dial__bar" id="bar" cx="100" cy="100" r="88"
+                stroke-dasharray="552.92" stroke-dashoffset="0" />
+      </svg>
+      <div class="dial__time">
+        <b id="timeText">25:00</b>
+        <span id="phaseText">专注中</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="startBtn">开始</button>
+      <button class="btn btn--ghost" id="resetBtn">重置</button>
+    </div>
+
+    <div class="dots" id="dots" title="本组已完成的番茄数"></div>
+
+    <div class="settings">
+      <label>专注（分钟）<input id="workMin" type="number" min="1" max="120" value="25" /></label>
+      <label>休息（分钟）<input id="restMin" type="number" min="1" max="60" value="5" /></label>
+      <label>长休息（分钟）<input id="longMin" type="number" min="1" max="90" value="15" /></label>
+    </div>
+
+    <div class="stats">
+      <div class="stat stat--hot"><b id="todayCount">0</b><span>今日完成</span></div>
+      <div class="stat"><b id="weekCount">0</b><span>本周完成</span></div>
+      <div class="stat"><b id="totalCount">0</b><span>累计完成</span></div>
+    </div>
+
+    <p class="tip" id="notifyTip">
+      时间到了会发送桌面通知：<button id="notifyBtn">开启通知</button>
+    </p>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   番茄钟 · 核心逻辑
+   ============================================================ */
+const STORAGE_KEY = "vibe_pomodoro_v1";
+const RING_LEN = 2 * Math.PI * 88; // 圆环周长
+
+/** 状态 */
+const state = {
+  phase: "work",        // work | rest | longRest
+  remaining: 25 * 60,   // 剩余秒数
+  total: 25 * 60,       // 本轮总秒数
+  running: false,
+  timerId: null,
+  roundInSet: 0,        // 本轮已完成的番茄数（4 个一长休息）
+  stats: { today: 0, week: 0, total: 0, dayKey: "", weekKey: "" },
+};
+
+/** DOM */
+const timeText = document.getElementById("timeText");
+const phaseText = document.getElementById("phaseText");
+const bar = document.getElementById("bar");
+const dial = document.getElementById("dial");
+const startBtn = document.getElementById("startBtn");
+const resetBtn = document.getElementById("resetBtn");
+const dots = document.getElementById("dots");
+const workMin = document.getElementById("workMin");
+const restMin = document.getElementById("restMin");
+const longMin = document.getElementById("longMin");
+const phaseTabs = document.getElementById("phaseTabs");
+const notifyTip = document.getElementById("notifyTip");
+
+/* ---------- 时间工具 ---------- */
+const dayKey = () => new Date().toISOString().slice(0, 10);
+
+function weekKey() {
+  const d = new Date();
+  const day = (d.getDay() + 6) % 7; // 周一=0
+  const monday = new Date(d.getTime() - day * 86400000);
+  return monday.toISOString().slice(0, 10);
+}
+
+/* ---------- 持久化 ---------- */
+function loadStats() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    if (saved.stats) state.stats = { ...state.stats, ...saved.stats };
+  } catch (e) { /* ignore */ }
+
+  // 跨天 / 跨周重置计数
+  if (state.stats.dayKey !== dayKey()) {
+    state.stats.today = 0;
+    state.stats.dayKey = dayKey();
+  }
+  if (state.stats.weekKey !== weekKey()) {
+    state.stats.week = 0;
+    state.stats.weekKey = weekKey();
+  }
+}
+
+function saveStats() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ stats: state.stats }));
+}
+
+/* ---------- 渲染 ---------- */
+function fmt(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
+function render() {
+  timeText.textContent = fmt(state.remaining);
+
+  const progress = state.total === 0 ? 0 : state.remaining / state.total;
+  bar.style.strokeDashoffset = String(RING_LEN * (1 - progress));
+
+  const isWork = state.phase === "work";
+  dial.classList.toggle("rest", !isWork);
+  phaseText.textContent = isWork ? "专注中" : state.phase === "longRest" ? "长休息" : "休息中";
+
+  startBtn.textContent = state.running ? "暂停" : "开始";
+
+  document.querySelectorAll("#phaseTabs button").forEach((b) => {
+    b.classList.toggle("is-active", b.dataset.phase === (isWork ? "work" : "rest"));
+  });
+
+  // 番茄圆点（每 4 个一组长休息）
+  dots.innerHTML = "";
+  for (let i = 0; i < 4; i++) {
+    const dot = document.createElement("i");
+    if (i < state.roundInSet) dot.classList.add("on");
+    dots.appendChild(dot);
+  }
+
+  document.getElementById("todayCount").textContent = state.stats.today;
+  document.getElementById("weekCount").textContent = state.stats.week;
+  document.getElementById("totalCount").textContent = state.stats.total;
+
+  document.title = (state.running ? "⏳ " : "") + fmt(state.remaining) + " · 番茄钟";
+}
+
+/* ---------- 提示音（Web Audio 合成，无需音频文件） ---------- */
+let audioCtx = null;
+
+function playChime() {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const now = audioCtx.currentTime;
+    [880, 1174.66, 1567.98].forEach((freq, i) => {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, now + i * 0.18);
+      gain.gain.exponentialRampToValueAtTime(0.25, now + i * 0.18 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + i * 0.18 + 0.5);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(now + i * 0.18);
+      osc.stop(now + i * 0.18 + 0.55);
+    });
+  } catch (e) { /* 静默失败 */ }
+}
+
+/* ---------- 通知 ---------- */
+function notify(title, body) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(title, { body, tag: "pomodoro" });
+  }
+}
+
+document.getElementById("notifyBtn").addEventListener("click", async () => {
+  if (!("Notification" in window)) {
+    notifyTip.textContent = "当前浏览器不支持桌面通知。";
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  notifyTip.innerHTML = perm === "granted"
+    ? "✅ 已开启桌面通知"
+    : '浏览器未授权通知，可通过浏览器设置开启。';
+});
+
+function initNotifyTip() {
+  if ("Notification" in window && Notification.permission === "granted") {
+    notifyTip.innerHTML = "✅ 已开启桌面通知";
+  }
+}
+
+/* ---------- 计时核心 ---------- */
+function tick() {
+  state.remaining -= 1;
+  if (state.remaining <= 0) {
+    finishPhase();
+    return;
+  }
+  render();
+}
+
+function start() {
+  if (state.running) return pause();
+  state.running = true;
+  state.timerId = setInterval(tick, 1000);
+  render();
+}
+
+function pause() {
+  state.running = false;
+  clearInterval(state.timerId);
+  state.timerId = null;
+  render();
+}
+
+function reset() {
+  pause();
+  loadDurations();
+  state.remaining = state.total;
+  render();
+}
+
+/** 结束当前阶段，自动切换 */
+function finishPhase() {
+  pause();
+  playChime();
+
+  if (state.phase === "work") {
+    // 记录一个完成的番茄
+    state.stats.total += 1;
+    state.stats.today += 1;
+    state.stats.week += 1;
+    state.roundInSet = (state.roundInSet + 1) % 5;
+    state.stats.dayKey = dayKey();
+    state.stats.weekKey = weekKey();
+    saveStats();
+
+    notify("🍅 专注结束", "时间到了，该休息一下了！");
+
+    // 每完成 4 个番茄进入长休息
+    const needLong = state.roundInSet === 0;
+    state.phase = needLong ? "longRest" : "rest";
+    state.total = (needLong ? Number(longMin.value) : Number(restMin.value)) * 60;
+    state.remaining = state.total;
+
+    setTimeout(() => start(), 900); // 自动开始休息
+  } else {
+    notify("☕ 休息结束", "休息好了，继续专注吧！");
+    state.phase = "work";
+    state.total = Number(workMin.value) * 60;
+    state.remaining = state.total;
+  }
+
+  render();
+}
+
+/* ---------- 时长设置 ---------- */
+function loadDurations() {
+  const mins = state.phase === "work" ? Number(workMin.value) : state.phase === "longRest" ? Number(longMin.value) : Number(restMin.value);
+  state.total = mins * 60;
+  state.remaining = state.total;
+}
+
+[workMin, restMin, longMin].forEach((input) => {
+  input.addEventListener("change", () => {
+    if (state.phase === "work" && !state.running) {
+      state.total = Number(workMin.value) * 60;
+      state.remaining = state.total;
+      render();
+    }
+  });
+});
+
+/* ---------- 阶段切换 ---------- */
+phaseTabs.addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-phase]");
+  if (!btn) return;
+  pause();
+
+  if (btn.dataset.phase === "work") {
+    state.phase = "work";
+    state.total = Number(workMin.value) * 60;
+  } else {
+    state.phase = "rest";
+    state.total = Number(restMin.value) * 60;
+  }
+  state.remaining = state.total;
+  render();
+});
+
+/* ---------- 按钮 ---------- */
+startBtn.addEventListener("click", start);
+resetBtn.addEventListener("click", reset);
+
+// 空格键 = 开始/暂停
+document.addEventListener("keydown", (e) => {
+  if (e.code === "Space" && e.target === document.body) {
+    e.preventDefault();
+    start();
+  }
+});
+
+/* ---------- 初始化 ---------- */
+loadStats();
+loadDurations();
+state.remaining = state.total;
+initNotifyTip();
+render();
+</script>
+</body>
+</html>
