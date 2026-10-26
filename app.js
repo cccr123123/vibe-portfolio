@@ -1,103 +1,205 @@
 /* ============================================================
-   个人作品集网站 · app.js
-   原生 JS，零依赖
+   个人作品集 · app.js (v2)
+   原生 JS · 零依赖
+   模块：Loader / Cursor / Reveal / Parallax / Clock / Copy / Header
    ============================================================ */
 
 (function () {
   "use strict";
 
-  /* ---------- 1. 顶部导航滚动态 ---------- */
-  const header = document.querySelector(".site-header");
+  const isTouch = window.matchMedia("(hover: none)").matches;
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ============================================================
+     1. 加载页
+     ============================================================ */
+  const loader = document.getElementById("loader");
+  const loaderBar = document.getElementById("loaderBar");
+
+  document.body.classList.add("is-loading");
+
+  const finishLoad = () => {
+    document.body.classList.remove("is-loading");
+    document.body.classList.add("is-loaded");
+    if (loader) loader.classList.add("is-done");
+  };
+
+  if (loader && !reduceMotion) {
+    // 进度线推进（视觉节奏，不是真实加载进度）
+    requestAnimationFrame(() => {
+      if (loaderBar) loaderBar.style.width = "100%";
+    });
+
+    // 最短展示 ~900ms，避免闪屏
+    const minShow = 900;
+    const start = performance.now();
+
+    const done = () => {
+      const elapsed = performance.now() - start;
+      const wait = Math.max(0, minShow - elapsed);
+      setTimeout(finishLoad, wait);
+    };
+
+    if (document.readyState === "complete") {
+      done();
+    } else {
+      window.addEventListener("load", done, { once: true });
+      // 兜底：加载卡住时也不会一直挡住页面
+      setTimeout(finishLoad, 3200);
+    }
+  } else {
+    finishLoad();
+  }
+
+  /* ============================================================
+     2. 自定义光标
+     ============================================================ */
+  const cursor = document.getElementById("cursor");
+  const cursorDot = cursor ? cursor.querySelector(".cursor__dot") : null;
+  const cursorRing = cursor ? cursor.querySelector(".cursor__ring") : null;
+
+  if (cursor && cursorDot && cursorRing && !isTouch && !reduceMotion) {
+    const pos = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
+    const ring = { x: pos.x, y: pos.y };
+    let visible = false;
+
+    // 鼠标移动：小点即时跟随
+    window.addEventListener(
+      "mousemove",
+      (e) => {
+        pos.x = e.clientX;
+        pos.y = e.clientY;
+
+        if (!visible) {
+          visible = true;
+          cursor.classList.add("is-on");
+          ring.x = pos.x;
+          ring.y = pos.y;
+        }
+
+        cursorDot.style.transform = `translate(${pos.x}px, ${pos.y}px) translate(-50%, -50%)`;
+      },
+      { passive: true }
+    );
+
+    // 外圈延迟跟随
+    const loop = () => {
+      ring.x += (pos.x - ring.x) * 0.16;
+      ring.y += (pos.y - ring.y) * 0.16;
+      cursorRing.style.transform = `translate(${ring.x}px, ${ring.y}px) translate(-50%, -50%)`;
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+
+    // 悬停可交互元素时放大
+    const interactiveSel = "a, button, .project-row, .skill-row, .contact-line";
+
+    document.addEventListener("mouseover", (e) => {
+      const target = e.target.closest(interactiveSel);
+      if (!target) return;
+      cursor.classList.add("is-hover");
+      if (target.matches("a, button")) cursor.classList.add("is-link");
+    });
+
+    document.addEventListener("mouseout", (e) => {
+      const target = e.target.closest(interactiveSel);
+      if (!target) return;
+      cursor.classList.remove("is-hover", "is-link");
+    });
+
+    document.addEventListener("mouseleave", () => {
+      cursor.classList.remove("is-on");
+      visible = false;
+    });
+  }
+
+  /* ============================================================
+     3. 滚动揭示（逐行/逐块上浮）
+     ============================================================ */
+  const revealItems = Array.from(document.querySelectorAll(".reveal"));
+
+  if (reduceMotion || !("IntersectionObserver" in window)) {
+    revealItems.forEach((el) => el.classList.add("is-in"));
+  } else {
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry, i) => {
+          if (!entry.isIntersecting) return;
+          // 同一批进入的元素错开出现，形成节奏
+          const delay = Math.min(i * 70, 280);
+          setTimeout(() => entry.target.classList.add("is-in"), delay);
+          io.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.16, rootMargin: "0px 0px -8% 0px" }
+    );
+
+    revealItems.forEach((el) => io.observe(el));
+  }
+
+  /* ============================================================
+     4. 滚动视差（首屏大标题淡出上移 + 顶部导航状态）
+     ============================================================ */
+  const heroTitle = document.getElementById("heroTitle");
+  const siteHeader = document.getElementById("siteHeader");
+  let ticking = false;
 
   const onScroll = () => {
-    header.classList.toggle("is-scrolled", window.scrollY > 8);
+    if (ticking) return;
+    ticking = true;
+
+    requestAnimationFrame(() => {
+      const y = window.scrollY;
+
+      // 顶部导航
+      if (siteHeader) {
+        siteHeader.classList.toggle("is-scrolled", y > 24);
+      }
+
+      // 首屏视差
+      if (heroTitle && !reduceMotion && !isTouch) {
+        const fade = Math.max(0, 1 - y / (window.innerHeight * 0.72));
+        heroTitle.style.transform = `translateY(${y * 0.14}px)`;
+        heroTitle.style.opacity = String(fade);
+      }
+
+      ticking = false;
+    });
   };
 
   window.addEventListener("scroll", onScroll, { passive: true });
   onScroll();
 
-  /* ---------- 2. 移动端菜单 ---------- */
-  const nav = document.getElementById("nav");
-  const navToggle = document.getElementById("navToggle");
+  /* ============================================================
+     5. 顶部时钟
+     ============================================================ */
+  const clock = document.getElementById("clock");
 
-  const closeNav = () => {
-    nav.classList.remove("is-open");
-    navToggle.setAttribute("aria-expanded", "false");
-    navToggle.setAttribute("aria-label", "打开菜单");
-  };
+  if (clock) {
+    const pad = (n) => String(n).padStart(2, "0");
 
-  navToggle.addEventListener("click", () => {
-    const open = nav.classList.toggle("is-open");
-    navToggle.setAttribute("aria-expanded", String(open));
-    navToggle.setAttribute("aria-label", open ? "关闭菜单" : "打开菜单");
-  });
+    const tick = () => {
+      const d = new Date();
+      clock.textContent = `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
 
-  // 点击导航链接后收起菜单
-  nav.querySelectorAll("a").forEach((link) => {
-    link.addEventListener("click", closeNav);
-  });
-
-  // 点击页面其他区域收起菜单
-  document.addEventListener("click", (e) => {
-    if (!nav.contains(e.target) && !navToggle.contains(e.target)) {
-      closeNav();
-    }
-  });
-
-  /* ---------- 3. 滚动渐入动画 ---------- */
-  const revealItems = document.querySelectorAll(".reveal");
-
-  if ("IntersectionObserver" in window) {
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
-            io.unobserve(entry.target); // 只触发一次
-          }
-        });
-      },
-      { threshold: 0.15, rootMargin: "0px 0px -40px 0px" }
-    );
-
-    revealItems.forEach((el) => io.observe(el));
-  } else {
-    // 兜底：不支持 IO 的浏览器直接显示
-    revealItems.forEach((el) => el.classList.add("is-visible"));
+    tick();
+    setInterval(tick, 1000);
   }
 
-  /* ---------- 4. 导航高亮当前区块 ---------- */
-  const sections = Array.from(document.querySelectorAll("main section[id]"));
-  const navLinks = Array.from(document.querySelectorAll(".nav__link"));
+  /* ============================================================
+     6. 复制邮箱
+     ============================================================ */
+  document.querySelectorAll("[data-copy]").forEach((el) => {
+    el.addEventListener("click", async () => {
+      const text = el.getAttribute("data-copy");
+      const arrow = el.querySelector(".row-arrow");
+      const original = arrow ? arrow.textContent : "";
 
-  const highlightNav = () => {
-    const offset = window.scrollY + 140;
-    let currentId = sections[0] ? sections[0].id : "";
-
-    sections.forEach((sec) => {
-      if (sec.offsetTop <= offset) currentId = sec.id;
-    });
-
-    navLinks.forEach((link) => {
-      link.classList.toggle("is-active", link.getAttribute("href") === "#" + currentId);
-    });
-  };
-
-  window.addEventListener("scroll", highlightNav, { passive: true });
-  highlightNav();
-
-  /* ---------- 5. 复制联系方式 ---------- */
-  document.querySelectorAll("[data-copy]").forEach((card) => {
-    const hint = card.querySelector(".contact-card__hint");
-    const original = hint ? hint.textContent : "";
-
-    card.addEventListener("click", async () => {
-      const text = card.getAttribute("data-copy");
       try {
         if (navigator.clipboard && window.isSecureContext) {
           await navigator.clipboard.writeText(text);
         } else {
-          // 兜底：非安全上下文（如本地 file:// 打开）
           const ta = document.createElement("textarea");
           ta.value = text;
           ta.style.position = "fixed";
@@ -107,21 +209,22 @@
           document.execCommand("copy");
           document.body.removeChild(ta);
         }
-        if (hint) {
-          hint.textContent = "✓ 已复制";
-          setTimeout(() => {
-            hint.textContent = original;
-          }, 1600);
+        if (arrow) {
+          arrow.textContent = "✓";
+          setTimeout(() => (arrow.textContent = original), 1400);
         }
       } catch (err) {
-        if (hint) hint.textContent = "复制失败，请手动选择";
+        if (arrow) {
+          arrow.textContent = "✗";
+          setTimeout(() => (arrow.textContent = original), 1400);
+        }
       }
     });
   });
 
-  /* ---------- 6. 页脚年份 ---------- */
+  /* ============================================================
+     7. 页脚年份
+     ============================================================ */
   const yearEl = document.getElementById("year");
-  if (yearEl) {
-    yearEl.textContent = String(new Date().getFullYear());
-  }
+  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
 })();
