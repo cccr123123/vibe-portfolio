@@ -8,215 +8,158 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <!-- ========== 加载页 ========== -->
-  <div class="loader" id="loader" aria-hidden="true">
-    <div class="loader__mark">CH</div>
-    <div class="loader__bar"><span id="loaderBar"></span></div>
-    <div class="loader__meta">PORTFOLIO — 2026</div>
+  <!-- ========== 中央摄像机（真实照片，镜头圆心对准视口中心）========== -->
+  <div class="camera" id="camera" aria-hidden="true">
+    <img src="assets/camera.png" alt="" draggable="false" />
   </div>
 
-  <!-- ========== 自定义光标 ========== -->
-  <div class="cursor" id="cursor" aria-hidden="true">
-    <span class="cursor__dot"></span>
-    <span class="cursor__ring"></span>
-  </div>
+  <!-- ========== 照片飞出层 ========== -->
+  <div class="photo-layer" id="photoLayer" aria-hidden="true"></div>
 
-  <!-- ========== 顶部导航 ========== -->
-  <header class="site-header" id="siteHeader">
-    <a class="logo" href="#top" aria-label="回到顶部">CH<span class="logo__mark">.</span></a>
-
-    <nav class="menu" aria-label="主导航">
-      <a class="menu__link" href="#about">关于</a>
-      <a class="menu__link" href="#skills">技能</a>
-      <a class="menu__link" href="#projects">作品</a>
-      <a class="menu__link" href="#contact">联系</a>
-    </nav>
-
-    <span class="site-header__clock" id="clock" aria-hidden="true">--:--:--</span>
-  </header>
-
-  <main id="top">
-    <!-- ========== 首屏 ========== -->
-    <section class="hero">
-      <div class="hero__top">
-        <p class="kicker">01 — PORTFOLIO / 2026</p>
-        <p class="hero__note">
-          <!-- 个人信息替换位置：简介 -->
-          数字经济专业学生。用自然语言驱动编程，<br />
-          把想法做成能用的小工具，<br />
-          再用一条链接分享出去。
-        </p>
-      </div>
-
-      <h1 class="hero__title" id="heroTitle">
-        <span class="hero__line">陈浩然</span>
-        <span class="hero__line hero__line--dim">数字经济</span>
-        <span class="hero__line hero__line--dim">Vibe Coding</span>
-      </h1>
-
-      <div class="hero__foot">
-        <span class="hero__scroll">SCROLL <i></i></span>
-        <span class="hero__facts">5 个项目 / 2 种部署 / 1 条链接</span>
-        <a class="hero__jump" href="#projects">查看作品 ↓</a>
+  <!-- ========== 场景 ========== -->
+  <main class="stage" id="stage">
+    <!-- 01 名片 -->
+    <section class="scene is-active" data-index="0" data-soft="0">
+      <div class="scene__inner">
+        <header class="scene__top">
+          <p class="kicker">01 / PROFILE</p>
+          <h1 class="display">陈浩然</h1>
+        </header>
+        <footer class="scene__bottom">
+          <p class="subtitle">武汉理工大学 · 数字经济</p>
+          <p class="lede">用自然语言驱动编程，把想法做成能用的小工具，再用一条链接分享出去。</p>
+        </footer>
       </div>
     </section>
 
-    <!-- ========== 关于我 ========== -->
-    <section class="section" id="about">
-      <div class="section__head">
-        <p class="kicker">02 — ABOUT</p>
-        <h2 class="section__title">关于我</h2>
-      </div>
-
-      <div class="about">
-        <div class="about__body">
-          <p>
-            我是数字经济专业的学生，正在系统学习如何用 AI 工具与自然语言驱动编程（Vibe Coding）
-            完成从需求分析、代码生成到云端部署的完整流程。
-          </p>
-          <p>
-            比起一上来就写代码，我更习惯先把问题说清楚：明确目标、拆解功能、定义边界，
-            再让 AI 生成初版，然后自己读懂、跑通、验证。这套方式让我在较短时间内
-            做出了 5 个能真正用起来的小工具。
-          </p>
-        </div>
-
-        <dl class="about__facts">
-          <div class="fact">
-            <dt>教育背景</dt>
-            <dd>数字经济专业 · 在读</dd>
+    <!-- 02 关于我 -->
+    <section class="scene" data-index="1" data-soft="1">
+      <div class="scene__inner">
+        <header class="scene__top">
+          <p class="kicker">02 / ABOUT</p>
+          <h2 class="title">关于我</h2>
+        </header>
+        <footer class="scene__bottom">
+          <div class="about">
+            <p>我是武汉理工大学数字经济专业的学生，正在系统学习如何用 AI 工具与自然语言驱动编程
+              （Vibe Coding）完成从需求分析、代码生成到云端部署的完整流程。</p>
+            <p>比起一上来就写代码，我更习惯先把问题说清楚：明确目标、拆解功能、定义边界，
+              再让 AI 生成初版，然后自己读懂、跑通、验证。这套方式让我在一周内做出了
+              5 个能真正用起来的小工具。</p>
           </div>
-          <div class="fact">
-            <dt>主攻方向</dt>
-            <dd>AI 辅助开发 · 数据分析</dd>
+          <ul class="facts">
+            <li><span>学校</span><b>武汉理工大学</b></li>
+            <li><span>专业</span><b>数字经济</b></li>
+            <li><span>方向</span><b>AI 辅助开发 · 数据分析</b></li>
+          </ul>
+        </footer>
+      </div>
+    </section>
+
+    <!-- 03 作品 -->
+    <section class="scene" data-index="2" data-soft="0">
+      <div class="scene__inner">
+        <header class="scene__top">
+          <p class="kicker">03 / WORKS</p>
+          <h2 class="title">作品</h2>
+          <p class="lede">5 个用 Vibe Coding 做的工具，照片正从镜头里飞出来。</p>
+        </header>
+        <footer class="scene__bottom">
+          <ul class="project-strip" id="projectStrip">
+            <li data-href="todo/index.html"><span>01</span>待办事项</li>
+            <li data-href="markdown/index.html"><span>02</span>Markdown 笔记</li>
+            <li data-href="pomodoro/index.html"><span>03</span>番茄钟</li>
+            <li data-href="weather/index.html"><span>04</span>天气查询</li>
+            <li data-href="#"><span>05</span>这个页面</li>
+          </ul>
+        </footer>
+      </div>
+    </section>
+
+    <!-- 04 技能与工具链 -->
+    <section class="scene" data-index="3" data-soft="1">
+      <div class="scene__inner">
+        <header class="scene__top">
+          <p class="kicker">04 / SKILLS &amp; TOOLKIT</p>
+          <h2 class="title">技能与工具</h2>
+        </header>
+        <footer class="scene__bottom">
+          <div class="skill-grid">
+            <div class="skill-col">
+              <h3>能做什么</h3>
+              <ul>
+                <li>数据分析<i>Excel / Python / 可视化</i></li>
+                <li>前端开发<i>HTML / CSS / JavaScript</i></li>
+                <li>AI 协作<i>提示词设计 / 代码审查</i></li>
+                <li>项目拆解<i>PRD / 技术设计 / 规范文档</i></li>
+              </ul>
+            </div>
+            <div class="skill-col">
+              <h3>用什么做</h3>
+              <ul>
+                <li>AI 助手<i>DeepSeek · Claude</i></li>
+                <li>开发环境<i>VS Code · Node.js · Git</i></li>
+                <li>部署平台<i>GitHub Pages · Vercel</i></li>
+                <li>浏览器能力<i>Canvas · Web Audio · Notification</i></li>
+              </ul>
+            </div>
           </div>
-          <div class="fact">
-            <dt>当前目标</dt>
-            <dd>把作品集做成可长期维护的资产</dd>
+        </footer>
+      </div>
+    </section>
+
+    <!-- 05 联系 -->
+    <section class="scene" data-index="4" data-soft="0">
+      <div class="scene__inner">
+        <header class="scene__top">
+          <p class="kicker">05 / CONTACT</p>
+          <h2 class="title">联系我</h2>
+        </header>
+        <footer class="scene__bottom">
+          <div class="contact">
+            <a class="contact__line" href="https://github.com/cccr123123" target="_blank" rel="noopener">
+              <span>GitHub</span><b>github.com/cccr123123</b>
+            </a>
+            <button class="contact__line" type="button" data-copy="3495925961@qq.com">
+              <span>Email</span><b>3495925961@qq.com</b>
+            </button>
           </div>
-        </dl>
+          <p class="hint">点邮箱一行可一键复制 · 页面由 Vibe Coding 生成</p>
+        </footer>
       </div>
-    </section>
-
-    <!-- ========== 技能 ========== -->
-    <section class="section" id="skills">
-      <div class="section__head">
-        <p class="kicker">03 — SKILLS</p>
-        <h2 class="section__title">技能</h2>
-      </div>
-
-      <ul class="skill-list">
-        <li class="skill-row reveal">
-          <span class="row-idx">01</span>
-          <span class="row-name">数据分析</span>
-          <span class="row-tags">Excel / Python 数据处理 / 数据可视化</span>
-        </li>
-        <li class="skill-row reveal">
-          <span class="row-idx">02</span>
-          <span class="row-name">编程开发</span>
-          <span class="row-tags">HTML / CSS / JavaScript / Git</span>
-        </li>
-        <li class="skill-row reveal">
-          <span class="row-idx">03</span>
-          <span class="row-name">AI 工具</span>
-          <span class="row-tags">Vibe Coding / 提示词设计 / AI 代码审查</span>
-        </li>
-        <li class="skill-row reveal">
-          <span class="row-idx">04</span>
-          <span class="row-name">协作沟通</span>
-          <span class="row-tags">需求梳理 / 文档写作 / 项目拆解</span>
-        </li>
-      </ul>
-    </section>
-
-    <!-- ========== 作品集 ========== -->
-    <section class="section" id="projects">
-      <div class="section__head">
-        <p class="kicker">04 — PROJECTS</p>
-        <h2 class="section__title">作品集</h2>
-      </div>
-
-      <p class="section__lead">5 个用 Vibe Coding 完成的实用小工具，全部可在线访问。</p>
-
-      <ul class="project-list">
-        <li>
-          <a class="project-row reveal" href="#top">
-            <span class="row-idx">01</span>
-            <span class="row-name">个人作品集网站</span>
-            <span class="row-tags">HTML / CSS / JavaScript</span>
-            <span class="row-arrow">↗</span>
-          </a>
-        </li>
-        <li>
-          <a class="project-row reveal" href="todo/index.html">
-            <span class="row-idx">02</span>
-            <span class="row-name">待办事项应用（进阶版）</span>
-            <span class="row-tags">JavaScript / LocalStorage</span>
-            <span class="row-arrow">↗</span>
-          </a>
-        </li>
-        <li>
-          <a class="project-row reveal" href="markdown/index.html">
-            <span class="row-idx">03</span>
-            <span class="row-name">Markdown 笔记应用</span>
-            <span class="row-tags">Markdown / 实时预览</span>
-            <span class="row-arrow">↗</span>
-          </a>
-        </li>
-        <li>
-          <a class="project-row reveal" href="pomodoro/index.html">
-            <span class="row-idx">04</span>
-            <span class="row-name">番茄钟计时器</span>
-            <span class="row-tags">Timer / Notification</span>
-            <span class="row-arrow">↗</span>
-          </a>
-        </li>
-        <li>
-          <a class="project-row reveal" href="weather/index.html">
-            <span class="row-idx">05</span>
-            <span class="row-name">天气查询应用</span>
-            <span class="row-tags">Open-Meteo API / Fetch</span>
-            <span class="row-arrow">↗</span>
-          </a>
-        </li>
-      </ul>
-    </section>
-
-    <!-- ========== 联系 ========== -->
-    <section class="section section--contact" id="contact">
-      <div class="section__head">
-        <p class="kicker">05 — CONTACT</p>
-        <h2 class="section__title">联系我</h2>
-      </div>
-
-      <div class="contact-lines">
-        <!-- 个人信息替换位置：GitHub 链接 -->
-        <a class="contact-line reveal" href="https://github.com/cccr123123" target="_blank" rel="noopener">
-          <span class="contact-line__label">GitHub</span>
-          <span class="contact-line__value">github.com/cccr123123</span>
-          <span class="row-arrow">↗</span>
-        </a>
-
-        <!-- 个人信息替换位置：邮箱 -->
-        <button class="contact-line reveal" type="button" data-copy="cccr123123@users.noreply.github.com">
-          <span class="contact-line__label">Email</span>
-          <span class="contact-line__value">cccr123123@users.noreply.github.com</span>
-          <span class="row-arrow">⧉</span>
-        </button>
-      </div>
-
-      <p class="contact__hint">点击邮箱一行可一键复制 · 页面由 Vibe Coding 生成</p>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="site-footer__row">
-      <span>© <span id="year">2026</span> 陈浩然</span>
-      <span>GitHub Pages · <a href="https://cccr123123.github.io/vibe-portfolio/" target="_blank" rel="noopener">线上版本</a></span>
-      <span>Vercel · <a href="https://vibe-portfolio-eight-mu.vercel.app" target="_blank" rel="noopener">线上版本</a></span>
-    </div>
-  </footer>
+  <!-- ========== 进度指示 ========== -->
+  <nav class="pager" id="pager" aria-label="场景导航">
+    <button class="pager__dot is-active" data-go="0" aria-label="第 1 屏"><i></i></button>
+    <button class="pager__dot" data-go="1" aria-label="第 2 屏"><i></i></button>
+    <button class="pager__dot" data-go="2" aria-label="第 3 屏"><i></i></button>
+    <button class="pager__dot" data-go="3" aria-label="第 4 屏"><i></i></button>
+    <button class="pager__dot" data-go="4" aria-label="第 5 屏"><i></i></button>
+  </nav>
 
-  <script src="app.js"></script>
+  <!-- ========== 顶部标识 ========== -->
+  <div class="brand" aria-hidden="true">CH<span>.</span></div>
+
+  <!-- ========== 照片详情弹窗 ========== -->
+  <div class="photo-modal" id="photoModal" hidden>
+    <div class="photo-modal__backdrop" data-close></div>
+    <div class="photo-modal__card" role="dialog" aria-modal="true" aria-labelledby="pmTitle">
+      <button class="photo-modal__close" type="button" data-close aria-label="关闭详情">✕</button>
+      <div class="photo-modal__shot">
+        <img id="pmImg" alt="" />
+      </div>
+      <div class="photo-modal__body">
+        <p class="photo-modal__idx" id="pmIdx">PROJECT 01</p>
+        <h3 class="photo-modal__title" id="pmTitle"></h3>
+        <p class="photo-modal__desc" id="pmDesc"></p>
+        <ul class="photo-modal__tags" id="pmTags"></ul>
+        <a class="photo-modal__btn" id="pmLink" href="#">打开项目 ↗</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="scenes.js"></script>
 </body>
 </html>
