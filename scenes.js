@@ -64,6 +64,13 @@
 
     current = index;
 
+    // 照片只在「作品」屏出现：离开就淡出清场，进入则稍后开始投片
+    if (SHOT_SCENES.has(index)) {
+      nextSpawnAt = performance.now() + 200;
+    } else {
+      retireShots();
+    }
+
     // 逐行动画总时长约 0.9s，锁定到播完为止
     window.setTimeout(() => {
       from.classList.remove("is-leaving");
@@ -202,14 +209,13 @@
   });
 
   /* ============================================================
-     照片粒子：一张一张从镜头口「侧着滑出 → 展开 → 漂浮 → 飘出屏幕」
+     照片粒子：紫金葫芦式「从镜头中心被放出来」
      时间线（秒）：
-       0.00 ~ 0.25  侧着滑出镜头
-       0.20 ~ 2.00  展开（2 秒慢速展开，看得清纸张开的过程）
-       2.00 ~ 9.00  漂浮散向四周
-       9.00 ~ 10.0  淡出、飘出屏幕
-     总时长 10 秒；展开完成后隔 1 秒投下一张（间隔 3 秒），最多 3 张同时
-     鼠标悬停某张 → 该张暂停计时、生成也暂停；移开后 1 秒恢复
+       0.00 ~ 0.25  镜头中心一个「点」（侧着，几乎看不见）
+       0.25 ~ 2.00  从点展开成平面（rotateY 88° → 0°，横向拉开）
+       1.80 ~ 9.00  3D 透视里从远处飞近（translate3d 的 z 从 -2600 → 600）
+       9.00 ~ 10.0  飘出屏幕边缘并淡出
+     前 1.8 秒位置**锁死在镜头中心**，绝不提前偏移
      ============================================================ */
   const LIFE = 10.0;           // 单张总时长（秒）
   const OPEN_END = 2.0;        // 展开结束（秒）
@@ -218,17 +224,31 @@
 
   const particles = [];
   const MAX_SHOTS = 3;
-  const BASE_W = 202;          // 展开完成后的基准宽度（scale = 1）· 已放大 1.2 倍
+  const BASE_W = 202;          // 展开完成后的基准宽度（scale = 1）
   const BASE_CSS_W = 100;      // .shot 的 CSS 宽度
 
   const DIR_COUNT = 8;
   let dirCursor = 0;
 
-  let nextSpawnAt = 0;         // 下一次投片时间（rAF 时间戳）
-  let holdUntil = 0;           // 悬停锁定解除时间
+  let nextSpawnAt = 0;
+  let holdUntil = 0;
+
+  /* 照片只在「03 WORKS」这一屏出现：
+     别的屏文案没有"作品照"的语义，照片飞过去只会盖住标题和正文 */
+  const SHOT_SCENES = new Set([2]);
 
   const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
   const easeOutCubic = (v) => 1 - Math.pow(1 - v, 3);
+
+  /* 离开作品屏：在飞的照片快速淡出，不许跟到别的屏上 */
+  function retireShots() {
+    particles.forEach((p) => {
+      p.el.style.transition = "opacity 0.25s ease";
+      p.el.style.opacity = "0";
+      window.setTimeout(() => p.el.remove(), 300);
+    });
+    particles.length = 0;
+  }
 
   function spawnShot() {
     if (!photoLayer) return;
@@ -252,10 +272,11 @@
 
     photoLayer.appendChild(el);
 
+    // 八个方向轮流 + 少量扰动，保证散得开
     const baseAngle =
       (dirCursor % DIR_COUNT) * ((Math.PI * 2) / DIR_COUNT) - Math.PI / 2;
     dirCursor++;
-    const angle = baseAngle + (Math.random() - 0.5) * 0.45;
+    const angle = baseAngle + (Math.random() - 0.5) * 0.42;
 
     const p = {
       el,
@@ -264,9 +285,11 @@
       dist:
         (Math.hypot(window.innerWidth, window.innerHeight) / 2) *
         (0.92 + Math.random() * 0.3),
-      phase: Math.random() * Math.PI * 2,
+      // 纸片在空中被气流带得微微自转（±2.4°）
+      rot: (Math.random() - 0.5) * 0.048,
+      phase: Math.random() * Math.PI * 2, // 漂浮相位，每张纸错开，不同步
+      hoverT: 0, // hover 抬起的过渡进度 0 → 1
       elapsed: 0,
-      rot: (Math.random() - 0.5) * 0.05,
       hovered: false,
       interactive: false,
       near: false,
@@ -302,12 +325,18 @@
     const cx = window.innerWidth / 2;
     const cy = window.innerHeight / 2;
 
-    /* ---------- 投片节奏（悬停时暂停，移开后 1 秒恢复） ---------- */
+    /* ---------- 投片节奏（只在作品屏；悬停时暂停，移开后 1 秒恢复） ---------- */
     const anyHovered = particles.some((p) => p.hovered);
+    const shotsAllowed = SHOT_SCENES.has(current);
+
     if (anyHovered) {
       holdUntil = t + HOLD_AFTER;
       if (nextSpawnAt < holdUntil) nextSpawnAt = holdUntil;
-    } else if (t >= nextSpawnAt && particles.length < MAX_SHOTS) {
+    } else if (
+      shotsAllowed &&
+      t >= nextSpawnAt &&
+      particles.length < MAX_SHOTS
+    ) {
       spawnShot();
       nextSpawnAt = t + SPAWN_GAP;
     }
@@ -316,59 +345,72 @@
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
 
-      // 被悬停的那张：完全冻结（不计时、不动）
       if (!p.hovered) p.elapsed += dt;
+      const e = p.elapsed;
 
-      const tt = p.elapsed / LIFE; // 0 → 1
-
-      if (tt >= 1) {
+      if (e >= LIFE) {
         p.el.remove();
         particles.splice(i, 1);
         continue;
       }
 
-      /* --- 位置：侧着滑出 → 飘向八个方向之一 → 漂浮出屏 --- */
+      /* --- 1) 展开：0.20 ~ 2.0 秒，从一条侧边展开成平面 --- */
+      const openT = easeOutCubic(clamp01((e - 0.2) / (OPEN_END - 0.2)));
+      const ry = (1 - openT) * 74;          // 侧面 74° → 正对 0°
+      const sx = 0.04 + 0.96 * openT;       // 横向展开
+      const sy = 1;
+      const scale = 0.4 + 0.6 * openT;      // 整体也从小变大
+      const rx = (1 - openT) * 7;           // 展开时还斜着一点点
+
+      /* --- 2) 飞行（GitHub 版轨迹）：从镜头口侧滑 54px → 飘向八方向 → 一直往外 → 出屏 --- */
+      const tt = e / LIFE;
       const moveT = easeOutCubic(clamp01(tt / 0.86));
       const dirX = Math.cos(p.angle);
       const dirY = Math.sin(p.angle) * 0.72;
-
-      const eject = easeOutCubic(clamp01(p.elapsed / 0.25)) * 54;
-      const floatAmp = p.elapsed > 2 ? 18 : 0;
-      const floatX = Math.sin(p.elapsed * 0.72 + p.phase) * floatAmp * 0.55;
-      const floatY = Math.cos(p.elapsed * 0.95 + p.phase) * floatAmp;
+      const eject = easeOutCubic(clamp01(e / 0.25)) * 54;
+      const floatAmp = e > 2 ? 18 : 0;
+      const floatX = Math.sin(e * 0.72 + p.phase) * floatAmp * 0.55;
+      const floatY = Math.cos(e * 0.95 + p.phase) * floatAmp;
 
       const px = cx + dirX * (eject + p.dist * moveT) + floatX;
       const py = cy + dirY * (eject + p.dist * moveT) + floatY;
 
-      /* --- 展开：0.20 ~ 2.00 秒，慢而清晰地展开 --- */
-      const openRaw = clamp01((p.elapsed - 0.2) / (OPEN_END - 0.2));
-      const openT = easeOutCubic(openRaw);
-
-      const size = 0.4 + 0.6 * openT;
-      const baseScale = (BASE_W * size) / BASE_CSS_W;
-      const sx = baseScale * (0.04 + 0.96 * openT); // 横向从一条边展开
-      const sy = baseScale;
-      const ry = (1 - openT) * 74; // 侧面 74° → 正对 0°
-
-      /* --- 透明度：淡入 / 最后 1 秒淡出 --- */
+      /* --- 3) 透明度：开头淡入 / 最后 1 秒淡出 --- */
       let opacity = 1;
-      if (p.elapsed < 0.15) opacity = p.elapsed / 0.15;
-      if (p.elapsed > 9) opacity = (LIFE - p.elapsed) / 1;
+      if (e < 0.15) opacity = e / 0.15;
+      if (e > 9) opacity = (LIFE - e) / 1;
       opacity = clamp01(opacity);
 
-      // 悬停时"略微"放大一点（不要抢戏）
-      const hoverBoost = p.hovered ? 1.04 : 1;
+      // 悬停：0.12 秒平滑地"抬起来" + 轻微放大（不能瞬间跳变）
+      p.hoverT = clamp01(p.hoverT + (p.hovered ? 1 : -1) * dt * 9);
+      const hoverBoost = 1 + 0.04 * easeOutCubic(p.hoverT);
+
+      const rotDeg = (p.rot * 180) / Math.PI;
 
       p.el.style.transform =
         `translate(${px.toFixed(1)}px, ${py.toFixed(1)}px) ` +
         `translate(-50%, -50%) ` +
-        `rotateY(${(p.hovered ? 0 : ry).toFixed(1)}deg) rotate(${p.rot}rad) ` +
-        `scale(${(sx * hoverBoost).toFixed(4)}, ${(sy * hoverBoost).toFixed(4)})`;
+        `rotateX(${rx.toFixed(1)}deg) ` +
+        `rotateY(${(p.hovered ? 0 : ry).toFixed(1)}deg) ` +
+        `rotate(${rotDeg.toFixed(2)}deg) ` +
+        `scale(${(sx * scale * hoverBoost).toFixed(4)}, ${(sy * scale * hoverBoost).toFixed(4)})`;
       p.el.style.opacity = opacity.toFixed(3);
-      p.el.style.zIndex = String(2000 - Math.round(tt * 1000) + (p.hovered ? 500 : 0));
+      p.el.style.zIndex = p.hovered ? "2200" : "";
 
-      /* --- 展开到 30% 就能交互（更灵敏） --- */
-      const ready = openT > 0.3;
+      /* 动态投影：纸离镜头越近，影子越大越虚
+         鼠标压住时 → 纸「抬起来」，影子明显加大加深（触碰反馈） */
+      const depth = openT;                   // 展开越多 = 越"近"
+      const shY = 4 + depth * 26;
+      const shBlur = 8 + depth * 40;
+      const shSpread = 10 + depth * 14;
+      const shAlpha = 0.06 + depth * 0.22;
+      const hv = easeOutCubic(p.hoverT);
+      p.el.style.boxShadow =
+        `0 ${(shY + 18 * hv).toFixed(0)}px ${(shBlur + 26 * hv).toFixed(0)}px -${(shSpread + 4 * hv).toFixed(0)}px rgba(40, 30, 18, ${(shAlpha + 0.16 * hv).toFixed(2)}), ` +
+        `0 ${(shY * 0.26).toFixed(0)}px ${(shBlur * 0.3).toFixed(0)}px -${(shSpread * 0.5).toFixed(0)}px rgba(40, 30, 18, ${(shAlpha * 1.45 + 0.1 * hv).toFixed(2)})`;
+
+      /* --- 展开到 40% 就能交互 --- */
+      const ready = openT > 0.4;
       if (ready !== p.interactive) {
         p.interactive = ready;
         p.el.classList.toggle("is-near", ready);
@@ -510,13 +552,19 @@
     openModal: () => openPhotoModal(PHOTO_DATA[0]),
   };
 
-  // 启动粒子循环
+  // ?modal：定时自动打开第一个项目的详情（用于截图/演示）
+  if (params.has("modal")) {
+    window.setTimeout(() => openPhotoModal(PHOTO_DATA[0]), 900);
+  }
+
+  // 启动粒子循环（只跑一次：之前这里跑了两遍，elapsed 双倍速，照片寿命腰斩）
   requestAnimationFrame(updateShots);
 
-  // 启动粒子循环 + 第一张照片
-  requestAnimationFrame(updateShots);
+  // 从 ?scene=2 直接进作品屏时，补第一张照片
   window.setTimeout(() => {
-    spawnShot();
-    nextSpawnAt = performance.now() + SPAWN_GAP;
+    if (SHOT_SCENES.has(current)) {
+      spawnShot();
+      nextSpawnAt = performance.now() + SPAWN_GAP;
+    }
   }, 700);
 })();

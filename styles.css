@@ -40,13 +40,34 @@ html {
 
 body {
   font-family: var(--sans);
-  background: var(--bg);
+  /* 纸面：中心是纯白（保留原来的干净），只在边缘过渡到一丝暖灰，
+     给相机一个「能落下去」的世界，而不是悬在真空里 */
+  background: radial-gradient(
+    ellipse 96% 86% at 50% 46%,
+    #ffffff 0%,
+    #ffffff 58%,
+    #f4f1ea 100%
+  );
+  background-attachment: fixed;
   color: var(--ink);
   line-height: 1.6;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overscroll-behavior: none;
+}
+
+/* 纸纹：4.5% 的纤维噪点，让纯白不再是一块塑料 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='180' height='180' filter='url(%23n)'/></svg>");
+  background-size: 180px 180px;
 }
 
 a {
@@ -85,25 +106,45 @@ img {
   left: 50%;
   top: 50%;
   /* 同时受宽度与高度约束，避免小窗口下遮挡内容 */
-  width: min(50vw, 52vh, 620px);
-  /* 镜头圆心在图片的 (50.05%, 48.94%) → 该点对齐视口正中 */
-  transform: translate(-50.05%, -48.94%);
+  width: min(50vw, 41vh, 620px);
+  /* 图片已裁掉 71% 的透明边 → 主体立即满宽（视觉大了约 20%）
+     镜头光学中心在裁边图的 (59.87%, 60.34%) → 该点精确对齐视口正中 */
+  transform: translate(-59.87%, -60.34%);
   transform-origin: center;
-  transition: opacity 0.65s ease, transform 0.75s var(--ease);
   z-index: 1;
   pointer-events: none;
 }
 
+/* 接地阴影：相机不是"贴"在纸上，是"落"在纸上 */
+.camera::after {
+  content: "";
+  position: absolute;
+  left: 15%;
+  right: 15%;
+  bottom: 1%;
+  height: 10%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(70, 52, 32, 0.2) 0%,
+    rgba(70, 52, 32, 0.08) 45%,
+    transparent 72%
+  );
+  filter: blur(14px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* 相机不再浮动（主人要求去掉呼吸动效），只保留切屏联动 */
 .camera img {
   display: block;
   width: 100%;
   height: auto;
   user-select: none;
   -webkit-user-drag: none;
-  /* 真透明背景 + 两层柔和投影：既有实物感，又往白底里退半档 */
-  filter: drop-shadow(0 34px 42px rgba(0, 0, 0, 0.15))
-    drop-shadow(0 10px 18px rgba(0, 0, 0, 0.07)) contrast(0.97)
-    brightness(1.02);
+  /* 暖调阴影 + 去一点饱和：相机从"照片里的黑铁块"变成"纸面上的物件" */
+  filter: drop-shadow(0 32px 40px rgba(72, 54, 34, 0.14))
+    drop-shadow(0 9px 16px rgba(72, 54, 34, 0.07)) contrast(0.86)
+    brightness(1.05) saturate(0.86);
 }
 
 .camera svg {
@@ -124,25 +165,55 @@ img {
   z-index: 4;
   pointer-events: none;
   overflow: hidden;
-  perspective: 1200px;
+  /* 3D 透视：照片用 translate3d 改变景深，真的「从远处飞近」 */
+  perspective: 900px;
+  perspective-origin: 50% 50%;
 }
 
+/* 一张相纸：白色相纸边框（底部加宽做题注区）、纸面明暗、边缘受光 */
 .shot {
   position: absolute;
   left: 0;
   top: 0;
-  width: 100px;             /* 基准宽度，实际由 JS 用 scale 缩放 */
-  aspect-ratio: 16 / 9;
-  background: #fff;
-  border: 1px solid var(--line-2);
-  box-shadow: 0 10px 26px -14px rgba(0, 0, 0, 0.28);
+  width: 112px;
+  height: 78px;
+  padding: 5px 5px 16px;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #fffefc 0%, #fdfaf2 100%);
+  border: 1px solid rgba(120, 100, 70, 0.1);
+  border-top-color: rgba(255, 255, 255, 0.92);
+  border-left-color: rgba(255, 255, 255, 0.55);
+  border-right-color: rgba(120, 100, 70, 0.07);
+  border-bottom-color: rgba(120, 100, 70, 0.17); /* 底边略暗 = 纸的厚度 */
+  border-radius: 1px;
+  /* 这一行的 box-shadow 由 JS 逐帧覆盖（随远近变化），这里只给个兜底 */
+  box-shadow: 0 14px 30px -18px rgba(40, 30, 18, 0.4);
   /* 不裁剪，让下方 ::after 的「感应区」能超出图片边界 */
   overflow: visible;
   transform-origin: center;
   will-change: transform, opacity;
   pointer-events: none;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease,
-    border-width 0.2s ease;
+  transition: none;
+}
+
+/* 纸面质感：轻微弓形明暗 + 极淡纸纤维（噪点必须细而淡，否则放大后会变成水泥灰） */
+.shot::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      104deg,
+      rgba(60, 42, 20, 0.045) 0%,
+      transparent 26%,
+      transparent 74%,
+      rgba(60, 42, 20, 0.032) 100%
+    ),
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='48' height='48'><filter id='p'><feTurbulence type='fractalNoise' baseFrequency='1.6' numOctaves='2'/></filter><rect width='48' height='48' filter='url(%23p)'/></svg>");
+  background-size: auto, 48px 48px;
+  mix-blend-mode: multiply;
+  opacity: 0.2;
 }
 
 /* 透明感应区：比图片大一圈，鼠标不用精确压到图上 */
@@ -158,6 +229,7 @@ img {
   height: 100%;
   object-fit: cover;
   display: block;
+  background: #fff;
 }
 
 /* 展开到 30% 即可交互（更灵敏） */
@@ -168,31 +240,29 @@ img {
 
 .shot.is-near:hover,
 .shot.is-hovered {
-  border-color: #111;
-  box-shadow: 0 34px 70px -24px rgba(0, 0, 0, 0.5);
+  border-color: rgba(120, 100, 70, 0.26);
 }
 
+/* 题注落在底部白边上，像相纸背面手写的那行字 */
 .shot__hint {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 5px;
+  right: 5px;
   bottom: 0;
+  height: 16px;
+  line-height: 16px;
   z-index: 2;
-  padding: 6px 0;
-  background: rgba(17, 17, 17, 0.85);
-  color: #fff;
-  font-size: 11px;
+  color: var(--ink-3);
+  font-size: 9px;
   letter-spacing: 0.08em;
   text-align: center;
   opacity: 0;
-  transform: translateY(100%);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.22s ease;
 }
 
 .shot.is-near:hover .shot__hint,
 .shot.is-hovered .shot__hint {
   opacity: 1;
-  transform: none;
 }
 
 /* ============================================================
@@ -257,8 +327,7 @@ img {
   justify-content: space-between;
   padding: clamp(40px, 7vh, 84px) 0 clamp(58px, 9.5vh, 104px);
   text-align: center;
-  position: relative;
-  z-index: 2; /* 确保文字压在摄像机之上 */
+  position: relative;  z-index: 2; /* 确保文字压在摄像机之上 */
 }
 
 .scene__top,
@@ -266,6 +335,10 @@ img {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  /* 文字落到相机上时，靠一层纸色柔光保住可读性；
+     纯白底上这层柔光几乎不可见，不会让字发糊 */
+  text-shadow: 0 0 14px rgba(255, 253, 249, 0.92),
+    0 0 3px rgba(255, 253, 249, 0.75);
 }
 
 /* 小高度窗口：进一步收紧间距 */
