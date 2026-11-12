@@ -94,95 +94,176 @@ body::before{
 .chrome__back svg{ transition:transform .25s ease; }
 .chrome__back:hover svg{ transform:translate(2px,-2px); }
 
-/* ---------- 搜索 ---------- */
-.finder-wrap{ position:relative; z-index:30; }
-.finder{
-  display:flex; align-items:flex-end; gap:0;
-  margin-top:clamp(22px,3.4vw,34px);
-  border-bottom:1px solid var(--ink);
-  padding-bottom:9px;
-}
-.finder__k{
-  font-family:var(--mono); font-size:11px; letter-spacing:.16em;
-  text-transform:uppercase; color:var(--ink-3);
-  padding-bottom:7px; margin-right:16px; white-space:nowrap;
-}
-.finder input{
-  flex:1 1 auto; min-width:0;
-  border:0; background:transparent; padding:5px 2px;
-  font-family:var(--sans); font-size:16px; color:var(--ink);
-  outline:none; appearance:none;
-}
-.finder input::placeholder{ color:var(--ink-3); }
-.finder input::-webkit-search-cancel-button{ -webkit-appearance:none; }
-
-.finder__go,
-.finder__geo{
-  border:1px solid var(--line);
-  background:transparent; color:var(--ink-2);
-  font-family:var(--sans); font-size:12.5px;
+.chrome__tools{ display:flex; align-items:center; gap:14px; }
+.chrome__i{
+  display:grid; place-items:center;
+  width:24px; height:24px; padding:0;
+  border:1px solid transparent; border-radius:50%;
+  background:transparent; color:var(--ink-3);
   cursor:pointer;
+  transition:color .2s ease, border-color .2s ease;
+}
+.chrome__i:hover{ color:var(--ink); border-color:var(--line); }
+
+/* ---------- 城市切换 ---------- */
+.cities{
+  display:flex; flex-wrap:wrap; gap:4px;
+  margin-top:clamp(18px,2.4vw,26px);
+  margin-left:-11px;
+}
+.city-btn{
+  border:1px solid transparent;
+  background:transparent;
+  padding:5px 11px; border-radius:999px;
+  font-family:var(--sans); font-size:12.5px; color:var(--ink-3);
+  cursor:pointer; letter-spacing:.02em;
+  transition:color .2s ease, border-color .2s ease;
+}
+.city-btn:hover{ color:var(--ink); border-color:var(--line); }
+.city-btn[aria-current="true"]{
+  color:var(--ink); border-color:var(--ink);
+}
+
+/* ---------- 时间轴 ---------- */
+.timeline{
+  margin-top:clamp(30px,4.4vw,52px);
+  padding-top:clamp(16px,2.2vw,22px);
+  border-top:1px solid var(--line);
+}
+.timeline[hidden]{ display:none; }
+.tl__head{
+  display:flex; align-items:baseline; justify-content:space-between; gap:16px;
+}
+.tl__title{
+  margin:0;
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.16em; text-transform:uppercase; color:var(--ink-2);
+}
+.tl__reset{
+  border:1px solid var(--line); background:transparent;
+  font-family:var(--sans); font-size:11.5px; color:var(--ink-2);
+  padding:4px 12px; border-radius:999px; cursor:pointer;
   transition:background .2s ease, color .2s ease, border-color .2s ease;
 }
-.finder__go{
-  padding:8px 20px; border-radius:999px; margin-left:18px;
-  letter-spacing:.06em;
-}
-.finder__go:hover{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
-.finder__geo{
-  display:grid; place-items:center;
-  width:36px; height:36px; padding:0; margin-left:8px; border-radius:50%;
-}
-.finder__geo:hover{ border-color:var(--ink); color:var(--ink); }
-.finder__geo.is-busy{ color:var(--ember); border-color:var(--ember); animation:pulse 1.4s ease-in-out infinite; }
-@keyframes pulse{ 50%{ opacity:.45; } }
+.tl__reset:hover{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.tl__reset[hidden]{ display:none; }
 
-/* ---------- 建议下拉 ---------- */
-.suggest{
-  display:none;
-  position:absolute;
-  top:calc(100% + 8px); left:0;
-  width:min(600px,100%);
-  border:1px solid var(--line);
-  background:var(--paper);
-  box-shadow:0 14px 34px -18px rgba(22,21,15,.35);
-  z-index:60;
+.tl__track{
+  position:relative;
+  height:96px;
+  margin-top:14px;
+  cursor:ew-resize;
+  touch-action:none;
+  color:var(--ink);
+  outline:none;
+  user-select:none;
 }
-.suggest.is-open{ display:block; }
-.suggest button{
-  display:flex; align-items:baseline; justify-content:space-between; gap:14px;
-  width:100%; text-align:left; padding:11px 16px;
-  font:inherit; font-size:14px; color:var(--ink);
-  background:transparent; border:0; cursor:pointer;
-  border-bottom:1px solid var(--line-2);
-  transition:background .16s ease;
+.tl__track:focus-visible{ outline:1.5px solid var(--ink); outline-offset:8px; }
+.tl__curve{
+  position:absolute; left:0; right:0; bottom:26px;
+  width:100%; height:66px;
+  overflow:visible;
+  pointer-events:none;
 }
-.suggest button:last-child{ border-bottom:0; }
-.suggest button:hover{ background:var(--paper-2); }
-.suggest small{
-  font-family:var(--mono); font-size:10.5px; letter-spacing:.08em;
+.tl__ticks{
+  position:absolute; left:0; right:0; bottom:0;
+  height:15px; pointer-events:none;
+}
+.tl__ticks span{
+  position:absolute; transform:translateX(-50%);
+  font-family:var(--mono); font-size:10px; letter-spacing:.08em;
   color:var(--ink-3); white-space:nowrap;
 }
+.tl__ticks span:first-child{ transform:none; }
+.tl__ticks span:last-child{ transform:translateX(-100%); }
 
-/* ---------- 收藏 ---------- */
-.chips{ display:flex; flex-wrap:wrap; gap:7px; margin-top:14px; }
-.chip{
-  display:inline-flex; align-items:center; gap:7px;
-  padding:6px 13px; border-radius:999px;
+.tl__cursor{
+  position:absolute; top:6px; bottom:24px;
+  width:1px; background:var(--ink);
+  transform:translateX(-.5px);
+  pointer-events:none;
+  will-change:left;
+}
+.tl__cursor span{
+  position:absolute; left:50%; top:0;
+  width:7px; height:7px; background:var(--ember);
+  transform:translate(-50%,-50%) rotate(45deg);
+}
+
+.tl__readout{
+  display:flex; align-items:baseline; gap:18px;
+  margin-top:4px;
+  font-family:var(--mono); font-size:12px; letter-spacing:.06em;
+  color:var(--ink-3);
+}
+.tl__time{
+  font-size:15px; color:var(--ink); letter-spacing:.02em;
+  font-variant-numeric:tabular-nums;
+}
+.tl__temp{ font-variant-numeric:tabular-nums; }
+.tl__hint{
+  margin-left:auto; font-size:11px; letter-spacing:.1em;
+  transition:opacity .35s ease;
+}
+.tl__hint.is-gone{ opacity:0; }
+
+/* ---------- 关于这一页 ---------- */
+.about{
+  position:fixed; inset:0; z-index:9000;
+  display:grid; place-items:center;
+  padding:24px;
+  background:rgba(12,16,24,.40);
+  animation:fade .28s ease both;
+}
+.about[hidden]{ display:none; }
+@keyframes fade{ from{ opacity:0; } }
+.about__panel{
+  position:relative;
+  width:min(560px,100%);
+  max-height:86vh; overflow:auto;
+  background:var(--paper);
   border:1px solid var(--line);
-  font-size:12.5px; color:var(--ink-2);
-  background:transparent; cursor:pointer;
-  letter-spacing:.01em;
-  transition:background .18s ease, color .18s ease, border-color .18s ease;
+  padding:clamp(24px,4vw,38px);
+  box-shadow:0 34px 90px -46px rgba(10,18,32,.7);
 }
-.chip:hover{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
-.chip__x{
-  font-family:var(--mono); font-size:10px; opacity:.45;
-  transition:opacity .18s ease, color .18s ease;
-  padding:0 1px;
+.about__close{
+  position:absolute; top:12px; right:12px;
+  width:28px; height:28px; padding:0;
+  border:1px solid var(--line); background:transparent;
+  font-size:11px; color:var(--ink-3); cursor:pointer;
+  transition:color .2s ease, border-color .2s ease;
 }
-.chip:hover .chip__x{ opacity:.85; }
-.chip__x:hover{ color:#e08a70; }
+.about__close:hover{ color:var(--ink); border-color:var(--ink); }
+.about__kicker{
+  margin:0 0 12px;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.18em;
+  text-transform:uppercase; color:var(--ink-3);
+}
+.about__title{
+  margin:0 0 16px;
+  font-family:var(--serif); font-size:clamp(1.4rem,2.6vw,1.9rem);
+  font-weight:600; letter-spacing:-.012em;
+}
+.about__lead{
+  margin:0 0 24px;
+  font-size:13.5px; line-height:1.9; color:var(--ink-2);
+}
+.about__list{ margin:0; display:grid; gap:15px; }
+.about__list div{ display:grid; grid-template-columns:54px 1fr; gap:14px; align-items:baseline; }
+.about__list dt{
+  font-family:var(--mono); font-size:10px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--ink-3);
+}
+.about__list dd{ margin:0; font-size:12.5px; line-height:1.8; color:var(--ink-2); }
+.about__list code{
+  font-family:var(--mono); font-size:11px;
+  background:var(--paper-2); padding:1px 4px;
+}
+.about__foot{
+  margin:24px 0 0;
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
+  color:var(--ink-3);
+}
 
 /* ---------- 状态行 ---------- */
 .status{
@@ -461,7 +542,7 @@ body::before{
 }
 .day__icon{
   display:grid; place-items:center;
-  height:32px; margin:9px 0 8px;
+  height:36px; margin:9px 0 8px;
   color:var(--ink-2);
 }
 .day__pop{
@@ -566,29 +647,20 @@ body::before{
 
   <header class="chrome">
     <span class="chrome__id">04 — Weather</span>
-    <a class="chrome__back" href="../index.html">
-      <span>返回作品集</span>
-      <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8.5 8.5 1.5M3.4 1.5H8.5v5.1"/></svg>
-    </a>
-  </header>
-
-  <div class="finder-wrap">
-    <form class="finder" id="finder" autocomplete="off" novalidate>
-      <label class="finder__k" for="cityInput">城市</label>
-      <input id="cityInput" type="search" placeholder="武汉 / Tokyo / Reykjavík" aria-label="输入城市名" spellcheck="false" />
-      <button class="finder__go" type="submit">查询</button>
-      <button class="finder__geo" type="button" id="locateBtn" title="使用当前位置" aria-label="使用当前位置">
-        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true">
-          <circle cx="8" cy="8" r="2.4"/>
-          <path d="M8 1v2.2M8 12.8V15M1 8h2.2M12.8 8H15" stroke-linecap="round"/>
+    <div class="chrome__tools">
+      <button type="button" class="chrome__i" id="aboutBtn" aria-label="关于这一页" title="关于这一页">
+        <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true">
+          <circle cx="8" cy="8" r="6.1"/><path d="M8 7.1v4.3M8 4.8v.15" stroke-linecap="round"/>
         </svg>
       </button>
-    </form>
+      <a class="chrome__back" href="../index.html">
+        <span>返回作品集</span>
+        <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8.5 8.5 1.5M3.4 1.5H8.5v5.1"/></svg>
+      </a>
+    </div>
+  </header>
 
-    <div class="suggest" id="suggest" role="listbox" aria-label="城市候选"></div>
-  </div>
-
-  <div class="chips" id="chips"></div>
+  <nav class="cities" id="cities" aria-label="切换城市"></nav>
   <p class="status" id="status" role="status" aria-live="polite"></p>
 
   <section class="hero" id="hero">
@@ -631,6 +703,26 @@ body::before{
     </figure>
   </section>
 
+  <section class="timeline" id="timeline" hidden>
+    <div class="tl__head">
+      <h2 class="tl__title">这一天的天空</h2>
+      <button type="button" class="tl__reset" id="tlReset" hidden>回到此刻</button>
+    </div>
+
+    <div class="tl__track" id="tlTrack" role="slider" tabindex="0"
+         aria-label="拖动查看当天任意时刻" aria-valuemin="0" aria-valuemax="24" aria-valuenow="12">
+      <svg class="tl__curve" id="tlCurve" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <div class="tl__ticks" id="tlTicks" aria-hidden="true"></div>
+      <div class="tl__cursor" id="tlCursor" aria-hidden="true"><span></span></div>
+    </div>
+
+    <div class="tl__readout">
+      <span class="tl__time" id="tlTime">--:--</span>
+      <span class="tl__temp" id="tlTemp">--°</span>
+      <span class="tl__hint" id="tlHint">拖动，看这一天的光</span>
+    </div>
+  </section>
+
   <section class="metrics" id="metrics" aria-label="当前气象指标">
     <div class="metric"><span class="metric__k">体感</span><b class="metric__v" id="mFeel">--<small>°</small></b></div>
     <div class="metric"><span class="metric__k">湿度</span><b class="metric__v" id="mHum">--<small>%</small></b></div>
@@ -658,6 +750,45 @@ body::before{
 
 </main>
 
+<div class="about" id="about" hidden>
+  <div class="about__panel" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+    <button type="button" class="about__close" id="aboutClose" aria-label="关闭">✕</button>
+    <p class="about__kicker">关于这一页</p>
+    <h2 class="about__title" id="aboutTitle">一块程序化的天空</h2>
+
+    <p class="about__lead">
+      这个页面里没有一张图片。云、光、雨、雪、夜色，全部是 Canvas 2D
+      逐帧画出来的；太阳的高度角由当地真实的日出日落时间推算。
+      拖动下方的时间轴，你能看见这一天从黎明到深夜的每一刻。
+    </p>
+
+    <dl class="about__list">
+      <div>
+        <dt>渲染</dt>
+        <dd>Canvas 2D 程序化绘制，7 种天气 × 昼夜。云与雪的贴图预先离屏渲染好，主循环里只剩 <code>drawImage</code>。</dd>
+      </div>
+      <div>
+        <dt>光照</dt>
+        <dd>天空的三段渐变色、太阳光晕、地平线暖光都由太阳高度角驱动；拖动时间轴时是连续变化的，不是切换贴图。</dd>
+      </div>
+      <div>
+        <dt>数据</dt>
+        <dd>Open-Meteo 免密钥接口，逐小时温度、天气代码、降水概率驱动画面与读数，拖动时按小时插值。</dd>
+      </div>
+      <div>
+        <dt>克制</dt>
+        <dd>系统开启「减少动态效果」时天空降到 12% 速度而非停死；页面不可见时暂停动画循环；<code>prefers-reduced-motion</code> 下入场动画整段关闭，内容直接可见。</dd>
+      </div>
+      <div>
+        <dt>体积</dt>
+        <dd>单文件、零依赖、零构建。没有框架，没有 CDN，没有字体下载。</dd>
+      </div>
+    </dl>
+
+    <p class="about__foot">← 拖动那条时间轴试试</p>
+  </div>
+</div>
+
 <script>
 /* ============================================================
    天气 · 04
@@ -667,9 +798,7 @@ body::before{
 (() => {
 "use strict";
 
-const GEO_URL = "https://geocoding-api.open-meteo.com/v1/search";
 const WX_URL  = "https://api.open-meteo.com/v1/forecast";
-const FAV_KEY = "vibe_weather_favs_v2";
 const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------------- WMO 代码 ---------------- */
@@ -1336,12 +1465,8 @@ class SkyView {
 const $ = (id) => document.getElementById(id);
 
 const el = {
-  form: $("finder"),
-  input: $("cityInput"),
-  suggest: $("suggest"),
-  chips: $("chips"),
   status: $("status"),
-  heroBody: $("heroBody"),
+  cities: $("cities"),
   kicker: $("cityKicker"),
   city: $("cityName"),
   temp: $("curTemp"),
@@ -1363,14 +1488,40 @@ const el = {
   chartPlot: $("chartPlot"),
   chartDays: $("chartDays"),
   coord: $("colophonCoord"),
+  timeline: $("timeline"),
+  tlTrack: $("tlTrack"),
+  tlCurve: $("tlCurve"),
+  tlTicks: $("tlTicks"),
+  tlCursor: $("tlCursor"),
+  tlTime: $("tlTime"),
+  tlTemp: $("tlTemp"),
+  tlHint: $("tlHint"),
+  tlReset: $("tlReset"),
+  about: $("about"),
+  aboutBtn: $("aboutBtn"),
+  aboutClose: $("aboutClose"),
 };
 
 const sky = new SkyView($("skyCanvas"));
 
-let favorites = [];
+/* 预设城市：故意挑天气/时区差异大的，保证访客切几下就能看到不同的天空 */
+const CITIES = [
+  { name: "武汉",       admin1: "湖北",       country: "中国",       latitude: 30.58,  longitude: 114.27 },
+  { name: "雷克雅未克", admin1: "首都区",     country: "冰岛",       latitude: 64.15,  longitude: -21.94 },
+  { name: "新加坡",     admin1: "",           country: "新加坡",     latitude: 1.35,   longitude: 103.82 },
+  { name: "东京",       admin1: "东京都",     country: "日本",       latitude: 35.68,  longitude: 139.69 },
+  { name: "纽约",       admin1: "纽约州",     country: "美国",       latitude: 40.71,  longitude: -74.01 },
+  { name: "悉尼",       admin1: "新南威尔士州", country: "澳大利亚", latitude: -33.87, longitude: 151.21 },
+];
+
 let activePlace = null;
-let suggestTimer = null;
 let reqToken = 0;
+
+/* 一天的逐小时数据 + 时间轴状态 */
+let H = null;          // { temp[], feels[], hum[], wind[], pop[], code[], sunriseH, sunsetH }
+let nowFrac = 0;       // 此刻是当天第几小时（0–24）
+let dragFrac = null;   // 拖动位置；null = 跟随此刻
+let dragging = false;
 
 /* ---------------- 状态行 ---------------- */
 function say(text, kind){
@@ -1383,89 +1534,53 @@ function sayLoading(text){
 }
 function sayClear(){ el.status.className = "status"; el.status.textContent = ""; }
 
-/* ---------------- 地理编码 ---------------- */
-async function geocode(name){
-  const url = GEO_URL + "?name=" + encodeURIComponent(name) +
-              "&count=6&language=zh&format=json";
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("geo");
-  const data = await res.json();
-  return data.results || [];
-}
-
-function placeLabel(p){
-  return [p.admin1, p.country].filter(Boolean).join(" · ");
-}
-
-function renderSuggest(list){
-  el.suggest.innerHTML = "";
-  if (!list.length){ el.suggest.classList.remove("is-open"); return; }
-  for (const p of list){
+/* ---------------- 城市切换 ---------------- */
+function renderCities(){
+  el.cities.innerHTML = "";
+  for (const c of CITIES){
     const b = document.createElement("button");
     b.type = "button";
-    b.setAttribute("role", "option");
-    const meta = placeLabel(p);
-    b.innerHTML = `<span>${p.name}</span>${meta ? `<small>${meta}</small>` : ""}`;
+    b.className = "city-btn";
+    b.textContent = c.name;
+    b.setAttribute("aria-current", String(!!activePlace && activePlace.name === c.name));
     b.addEventListener("click", () => {
-      el.suggest.classList.remove("is-open");
-      el.input.value = "";
-      loadWeather(p);
+      if (activePlace && activePlace.name === c.name) return;
+      loadWeather(c);
     });
-    el.suggest.appendChild(b);
-  }
-  el.suggest.classList.add("is-open");
-}
-
-el.input.addEventListener("input", () => {
-  const val = el.input.value.trim();
-  clearTimeout(suggestTimer);
-  if (!val){ el.suggest.classList.remove("is-open"); return; }
-  suggestTimer = setTimeout(async () => {
-    try { renderSuggest(await geocode(val)); }
-    catch (e) { /* 输入抖动忽略 */ }
-  }, 380);
-});
-
-document.addEventListener("click", (e) => {
-  if (!el.suggest.contains(e.target) && e.target !== el.input){
-    el.suggest.classList.remove("is-open");
-  }
-});
-
-el.form.addEventListener("submit", (e) => { e.preventDefault(); doSearch(); });
-
-el.input.addEventListener("keydown", (e) => {
-  if (e.key === "Enter"){ e.preventDefault(); doSearch(); }
-  if (e.key === "Escape"){ el.suggest.classList.remove("is-open"); el.input.blur(); }
-});
-
-async function doSearch(){
-  const name = el.input.value.trim();
-  if (!name) return;
-  el.suggest.classList.remove("is-open");
-  sayLoading("正在定位");
-  try {
-    const list = await geocode(name);
-    if (!list.length){
-      say(`没找到「${name}」，换个写法，或试试英文名。`, "err");
-      return;
-    }
-    await loadWeather(list[0]);
-  } catch (e){
-    say("搜索请求失败，稍后重试。", "err");
+    el.cities.appendChild(b);
   }
 }
+
+/* ---------------- 关于浮层 ---------------- */
+function openAbout(){
+  el.about.hidden = false;
+  document.addEventListener("keydown", aboutKey);
+  el.aboutClose.focus({ preventScroll: true });
+}
+function closeAbout(){
+  el.about.hidden = true;
+  document.removeEventListener("keydown", aboutKey);
+  el.aboutBtn.focus({ preventScroll: true });
+}
+function aboutKey(e){
+  if (e.key === "Escape") closeAbout();
+}
+el.aboutBtn.addEventListener("click", openAbout);
+el.aboutClose.addEventListener("click", closeAbout);
+el.about.addEventListener("click", (e) => { if (e.target === el.about) closeAbout(); });
 
 /* ---------------- 天气 ---------------- */
 async function loadWeather(place){
   activePlace = place;
   const token = ++reqToken;
   sayLoading("正在获取天气");
+  renderCities();
 
   const params = new URLSearchParams({
     latitude: place.latitude,
     longitude: place.longitude,
-    current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day,precipitation",
+    current: "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,is_day",
+    hourly: "temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code,precipitation_probability",
     daily: "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_probability_max",
     timezone: "auto",
     forecast_days: "5",
@@ -1480,34 +1595,11 @@ async function loadWeather(place){
     sayClear();
   } catch (e){
     if (token !== reqToken) return;
-    say("天气数据获取失败，稍后重试。", "err");
+    say("天气数据没能取回来，等一下再试试。", "err");
   }
 }
 
-/* ---------------- 太阳位置 ---------------- */
-function sunProgress(timeStr, sunrise, sunset){
-  const now = parseLocal(timeStr);
-  const a = parseLocal(sunrise), b = parseLocal(sunset);
-  if (!now || !a || !b || b <= a) return .5;
-  return clamp01((now - a) / (b - a));
-}
-function nightProgress(timeStr, sunset, sunriseNext){
-  const now = parseLocal(timeStr);
-  const a = parseLocal(sunset), b = parseLocal(sunriseNext);
-  if (!now || !a || !b) return .5;
-  let span = b - a;
-  if (span <= 0) span += 86400000;
-  let d = now - a;
-  if (d < 0) d += 86400000;
-  return clamp01(d / span);
-}
-/* 解析 Open-Meteo 返回的本地时间字符串，避免浏览器时区造成偏移 */
-function parseLocal(s){
-  if (!s) return null;
-  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  if (!m) return null;
-  return new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime();
-}
+/* ---------------- 时间格式 ---------------- */
 function hhmm(s){
   const m = String(s || "").match(/T(\d{2}):(\d{2})/);
   return m ? m[1] + ":" + m[2] : "--:--";
@@ -1539,6 +1631,8 @@ function startClock(timezone, utcOffsetSec){
 }
 
 function tickClock(){
+  if (dragFrac != null) return;   // 正在拖时间轴：画面和时钟交给拖动逻辑，别覆盖
+
   const now = new Date();
   let hh, mm, ss, dateStr, resolved = false;
 
@@ -1576,33 +1670,37 @@ function tickClock(){
   el.skyHHMM.textContent = hh + ":" + mm;
   el.skySS.textContent = ss;
   el.skyDate.textContent = dateStr;
+
+  /* 实时模式下让画面随时间缓慢推移（每分钟才重算一次，避免白耗电） */
+  if (dragFrac == null){
+    const nf = localNowFrac(clockOffsetMs / 1000);
+    if (Math.abs(nf - nowFrac) * 60 >= 1){
+      nowFrac = nf;
+      applyMoment(nowFrac);
+    }
+  }
 }
 
 /* ---------------- 渲染 ---------------- */
 function render(place, data){
   const cur = data.current || {};
   const daily = data.daily || {};
-  const [desc, scene] = wmo(cur.weather_code);
 
-  /* 文字 */
-  const sub = [place.admin1, place.country].filter(Boolean).join(" · ");
-  el.kicker.textContent = sub || (place.latitude != null ? "当前坐标" : "地点");
+  /* 城市与日期 */
   el.city.textContent = place.name;
+  el.kicker.textContent = [place.admin1, place.country].filter(Boolean).join(" · ") || "当前坐标";
+  el.stamp.textContent = dayStamp((daily.time || [])[0] || cur.time);
 
-  el.stamp.textContent = dayStamp(cur.time);
+  if (place.latitude != null){
+    const lat = Math.abs(place.latitude).toFixed(2) + "°" + (place.latitude >= 0 ? "N" : "S");
+    const lon = Math.abs(place.longitude).toFixed(2) + "°" + (place.longitude >= 0 ? "E" : "W");
+    el.coord.textContent = lat + " " + lon;
+  } else {
+    el.coord.textContent = "坐标未知";
+  }
 
-  el.desc.textContent = desc;
-  el.temp.innerHTML = (() => {
-    const t = round(cur.temperature_2m);
-    return t.startsWith("−") ? `<span class="neg">−</span>${t.slice(1)}` : t;
-  })();
-
-  /* 指标 */
-  const pop0 = (daily.precipitation_probability_max || [])[0];
-  el.mFeel.innerHTML = round(cur.apparent_temperature) + "<small>°</small>";
-  el.mHum.innerHTML  = round(cur.relative_humidity_2m) + "<small>%</small>";
-  el.mWind.innerHTML = round(cur.wind_speed_10m) + "<small>km/h</small>";
-  el.mPop.innerHTML  = (pop0 == null ? "--" : pop0) + "<small>%</small>";
+  /* 打包今天这一天的逐小时数据 */
+  H = buildDay(data);
 
   /* 今日 / 明天的温度区间 + 日出日落 */
   const hi = daily.temperature_2m_max || [];
@@ -1613,35 +1711,238 @@ function render(place, data){
     `日出 <b>${hhmm((daily.sunrise || [])[0])}</b>` +
     `　日落 <b>${hhmm((daily.sunset || [])[0])}</b>`;
 
-  /* 天空窗 */
-  const isDay = cur.is_day === 1 || cur.is_day === true;
-  const sunrise = (daily.sunrise || [])[0];
-  const sunset  = (daily.sunset  || [])[0];
-  const sunriseNext = (daily.sunrise || [])[1] || sunrise;
-  const p = isDay
-    ? sunProgress(cur.time, sunrise, sunset)
-    : nightProgress(cur.time, sunset, sunriseNext);
-
-  sky.setScene(scene, !isDay, p, cur.wind_speed_10m || 16);
-  startClock(data.timezone, data.utc_offset_seconds);
-  el.skyCap.textContent = desc + " · " + (isDay ? "日" : "夜");
-  el.skyCapTemp.textContent = round(cur.temperature_2m) + "°";
-
-  /* 坐标 */
-  if (place.latitude != null){
-    const lat = Math.abs(place.latitude).toFixed(2) + "°" + (place.latitude >= 0 ? "N" : "S");
-    const lon = Math.abs(place.longitude).toFixed(2) + "°" + (place.longitude >= 0 ? "E" : "W");
-    el.coord.textContent = lat + " " + lon;
-  } else {
-    el.coord.textContent = "坐标未知";
-  }
-
-  /* 预报 */
+  /* 五天 */
   renderOutlook(daily);
 
-  /* 收藏 */
-  renderChips();
+  /* 城市栏 */
+  renderCities();
+
+  /* 时钟 + 时间轴 */
+  startClock(data.timezone, data.utc_offset_seconds);
+  nowFrac = localNowFrac(clockOffsetMs / 1000);
+  dragFrac = null;
+  dragging = false;
+  el.tlReset.hidden = true;
+  el.tlHint.classList.remove("is-gone");
+  renderTimeline();
+
+  applyMoment(nowFrac);
+  el.timeline.hidden = false;
 }
+
+/* ---------------- 一天的数据 ---------------- */
+function hourOf(iso){
+  const m = String(iso || "").match(/T(\d{2}):(\d{2})/);
+  return m ? (+m[1]) + (+m[2]) / 60 : null;
+}
+
+function localNowFrac(offsetSec){
+  const t = new Date(Date.now() + (Number(offsetSec) || 0) * 1000);
+  return t.getUTCHours() + t.getUTCMinutes() / 60;
+}
+
+function buildDay(data){
+  const h = data.hourly || {};
+  const daily = data.daily || {};
+  const times = h.time || [];
+  if (!times.length) return null;
+
+  const dayKey = (daily.time && daily.time[0]) || String(times[0]).slice(0, 10);
+  let start = times.findIndex((t) => String(t).slice(0, 10) === dayKey);
+  if (start < 0) start = 0;
+
+  const pick = (arr, n) => {
+    const out = [];
+    for (let i = 0; i < n; i++){
+      const v = (arr || [])[start + i];
+      out.push(v == null ? null : v);
+    }
+    return out;
+  };
+
+  return {
+    temp:  pick(h.temperature_2m, 25),
+    feels: pick(h.apparent_temperature, 25),
+    hum:   pick(h.relative_humidity_2m, 25),
+    wind:  pick(h.wind_speed_10m, 25),
+    pop:   pick(h.precipitation_probability, 25),
+    code:  pick(h.weather_code, 25),
+    sunriseH: hourOf((daily.sunrise || [])[0]),
+    sunsetH:  hourOf((daily.sunset  || [])[0]),
+  };
+}
+
+function sampleHour(arr, t, asInt){
+  if (!arr || !arr.length) return null;
+  const n = arr.length;
+  const x = Math.max(0, Math.min(n - 1, t));
+  const i = Math.min(n - 2, Math.floor(x));
+  const f = x - i;
+  const a = arr[i], b = arr[i + 1];
+  if (asInt) return a == null ? b : a;
+  if (a == null) return b;
+  if (b == null) return a;
+  return a + (b - a) * f;
+}
+
+/* t = 当天第几小时（0–24），返回太阳状态 */
+function sunAt(t){
+  const sr = H && H.sunriseH, ss = H && H.sunsetH;
+  if (sr == null || ss == null || ss <= sr) return { night: t < 6 || t > 19, p: .5 };
+  if (t >= sr && t <= ss) return { night: false, p: (t - sr) / (ss - sr) };
+  const nightLen = 24 - ss + sr || 1;
+  const d = t > ss ? t - ss : t + 24 - ss;
+  return { night: true, p: Math.max(0, Math.min(1, d / nightLen)) };
+}
+
+function fmtTemp(v){
+  const t = round(v);
+  return t.startsWith("−") ? `<span class="neg">−</span>${t.slice(1)}` : t;
+}
+
+/* ---------------- 把页面渲染到「某一天中的某一刻」 ---------------- */
+function applyMoment(t){
+  if (!H) return;
+  const tt = Math.max(0, Math.min(24, t));
+
+  const temp  = sampleHour(H.temp, tt);
+  const feels = sampleHour(H.feels, tt);
+  const hum   = sampleHour(H.hum, tt);
+  const wind  = sampleHour(H.wind, tt);
+  const pop   = sampleHour(H.pop, tt);
+  const code  = sampleHour(H.code, tt, true);
+  const [desc, scene] = wmo(code);
+
+  el.temp.innerHTML = fmtTemp(temp);
+  el.desc.textContent = desc;
+  el.mFeel.innerHTML = round(feels) + "<small>°</small>";
+  el.mHum.innerHTML  = round(hum) + "<small>%</small>";
+  el.mWind.innerHTML = round(wind) + "<small>km/h</small>";
+  el.mPop.innerHTML  = (pop == null ? "--" : Math.round(pop)) + "<small>%</small>";
+
+  const sun = sunAt(tt);
+  sky.setScene(scene, sun.night, sun.p, wind || 16);
+  el.skyCap.textContent = desc + " · " + (sun.night ? "夜" : "日");
+  el.skyCapTemp.textContent = round(temp) + "°";
+
+  const whole = Math.floor(tt);
+  const mm = Math.round((tt - whole) * 60) % 60;
+  const label = String(whole % 24).padStart(2, "0") + ":" + String(mm).padStart(2, "0");
+
+  if (dragFrac != null){
+    el.skyHHMM.textContent = label;
+    el.skySS.textContent = "";
+  }
+
+  el.tlTime.textContent = label;
+  el.tlTemp.textContent = round(temp) + "°";
+  el.tlCursor.style.left = (tt / 24 * 100) + "%";
+  el.tlTrack.setAttribute("aria-valuenow", tt.toFixed(1));
+}
+
+/* ---------------- 时间轴：曲线 + 刻度 ---------------- */
+function renderTimeline(){
+  el.tlTicks.innerHTML = [0, 6, 12, 18, 24]
+    .map((h) => `<span style="left:${(h / 24 * 100).toFixed(2)}%">${h}</span>`).join("");
+
+  if (!H || !H.temp) { el.tlCurve.innerHTML = ""; return; }
+  const vals = H.temp.slice(0, 25).filter((v) => v != null);
+  if (!vals.length){ el.tlCurve.innerHTML = ""; return; }
+
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  const span = (hi - lo) || 1;
+  const yOf = (v) => 86 - ((v - lo) / span) * 74;
+  const xOf = (i) => (i / 24) * 100;
+
+  let d = "";
+  for (let i = 0; i < 25; i++){
+    const v = H.temp[i];
+    if (v == null) continue;
+    d += (d ? " L" : "M") + xOf(i).toFixed(2) + " " + yOf(v).toFixed(2);
+  }
+  if (!d) { el.tlCurve.innerHTML = ""; return; }
+
+  /* 夜间时段：日出前 + 日落后，用极淡的底色标出来 */
+  let bands = "";
+  const sr = H.sunriseH, ss = H.sunsetH;
+  if (sr != null && ss != null && ss > sr){
+    bands =
+      `<rect x="0" y="0" width="${(sr / 24 * 100).toFixed(2)}" height="100" fill="currentColor" opacity=".032"/>` +
+      `<rect x="${(ss / 24 * 100).toFixed(2)}" y="0" width="${(100 - ss / 24 * 100).toFixed(2)}" height="100" fill="currentColor" opacity=".032"/>`;
+  }
+
+  const area = d + ` L100 100 L0 100 Z`;
+
+  el.tlCurve.innerHTML = `
+    <defs>
+      <linearGradient id="tl-fill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="currentColor" stop-opacity=".10"/>
+        <stop offset="1" stop-color="currentColor" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    ${bands}
+    <path d="${area}" fill="url(#tl-fill)"/>
+    <line x1="0" y1="98" x2="100" y2="98" stroke="currentColor" stroke-opacity=".16"
+          stroke-width="1" vector-effect="non-scaling-stroke"/>
+    <path d="${d}" fill="none" stroke="currentColor" stroke-opacity=".55"
+          stroke-width="1.3" vector-effect="non-scaling-stroke"
+          stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
+/* ---------------- 时间轴：拖动 ---------------- */
+function fracFromX(clientX){
+  const r = el.tlTrack.getBoundingClientRect();
+  if (!r.width) return 12;
+  return Math.max(0, Math.min(1, (clientX - r.left) / r.width)) * 24;
+}
+
+function setDrag(t){
+  dragFrac = Math.max(0, Math.min(24, t));
+  el.tlReset.hidden = false;
+  el.tlHint.classList.add("is-gone");
+  applyMoment(dragFrac);
+}
+
+function backToNow(){
+  dragFrac = null;
+  dragging = false;
+  el.tlReset.hidden = true;
+  el.tlHint.classList.remove("is-gone");
+  tickClock();
+  applyMoment(nowFrac);
+}
+
+el.tlTrack.addEventListener("pointerdown", (e) => {
+  e.preventDefault();
+  dragging = true;
+  try { el.tlTrack.setPointerCapture(e.pointerId); } catch (err){}
+  setDrag(fracFromX(e.clientX));
+});
+window.addEventListener("pointermove", (e) => {
+  if (!dragging) return;
+  e.preventDefault();
+  setDrag(fracFromX(e.clientX));
+});
+window.addEventListener("pointerup", () => { dragging = false; });
+window.addEventListener("pointercancel", () => { dragging = false; });
+
+el.tlTrack.addEventListener("keydown", (e) => {
+  const base = dragFrac != null ? dragFrac : nowFrac;
+  const step = e.shiftKey ? 1 : .5;
+  if (e.key === "ArrowLeft" || e.key === "ArrowDown"){
+    e.preventDefault(); setDrag(base - step);
+  } else if (e.key === "ArrowRight" || e.key === "ArrowUp"){
+    e.preventDefault(); setDrag(base + step);
+  } else if (e.key === "Home"){
+    e.preventDefault(); setDrag(0);
+  } else if (e.key === "End"){
+    e.preventDefault(); setDrag(24);
+  } else if (e.key === "Escape"){
+    e.preventDefault(); backToNow();
+  }
+});
+
+el.tlReset.addEventListener("click", backToNow);
 
 /* ---------------- 五天图表 ---------------- */
 function renderOutlook(daily){
@@ -1701,7 +2002,7 @@ function renderOutlook(daily){
     return `
       <div class="day">
         <div class="day__name">${name}</div>
-        <div class="day__icon" title="${wmo(codes[i])[0]}">${wxIcon(kind, 21)}</div>
+        <div class="day__icon" title="${wmo(codes[i])[0]}">${wxIcon(kind, 26)}</div>
         <div class="day__pop ${hasPop ? "" : "day__pop--dry"}" title="降水概率">
           ${hasPop ? `<i style="--p:${Math.max(0, Math.min(100, pop))}%"></i>` : ""}${pop == null ? "--" : pop}%
         </div>
@@ -1709,102 +2010,15 @@ function renderOutlook(daily){
   }).join("");
 }
 
-/* ---------------- 收藏 ---------------- */
-function loadFavs(){
-  try { favorites = JSON.parse(localStorage.getItem(FAV_KEY) || "[]"); }
-  catch (e){ favorites = []; }
-  if (!Array.isArray(favorites)) favorites = [];
-  renderChips();
-}
-function saveFavs(){
-  try { localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); } catch (e){}
-}
-function sameSpot(a, b){
-  return a && b &&
-    Math.abs(a.latitude - b.latitude) < .01 &&
-    Math.abs(a.longitude - b.longitude) < .01;
-}
-function renderChips(){
-  el.chips.innerHTML = "";
-  if (activePlace && !favorites.some((f) => sameSpot(f, activePlace))){
-    const add = document.createElement("button");
-    add.type = "button";
-    add.className = "chip";
-    add.innerHTML = `<span>＋ 收藏 ${activePlace.name}</span>`;
-    add.addEventListener("click", () => {
-      favorites.push({
-        name: activePlace.name,
-        latitude: activePlace.latitude,
-        longitude: activePlace.longitude,
-        country: activePlace.country,
-        admin1: activePlace.admin1,
-      });
-      saveFavs();
-      renderChips();
-    });
-    el.chips.appendChild(add);
-  }
-
-  favorites.forEach((f, idx) => {
-    const chip = document.createElement("span");
-    chip.className = "chip";
-    chip.innerHTML = `<span>${f.name}</span><span class="chip__x" title="删除" role="button" tabindex="0">✕</span>`;
-    chip.addEventListener("click", (e) => {
-      if (e.target.classList.contains("chip__x")){
-        favorites.splice(idx, 1);
-        saveFavs();
-        renderChips();
-        return;
-      }
-      loadWeather(f);
-    });
-    chip.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " "){
-        e.preventDefault();
-        loadWeather(f);
-      }
-    });
-    chip.tabIndex = 0;
-    el.chips.appendChild(chip);
-  });
-}
-
-/* ---------------- 定位 ---------------- */
-$("locateBtn").addEventListener("click", () => {
-  if (!navigator.geolocation){
-    say("这个浏览器不支持定位。", "err");
-    return;
-  }
-  sayLoading("正在定位");
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      const place = {
-        name: "此处",
-        latitude: pos.coords.latitude,
-        longitude: pos.coords.longitude,
-        country: "",
-        admin1: "",
-      };
-      await loadWeather(place);
-    },
-    () => say("定位被拒绝。直接输入城市名就行。", "err"),
-    { timeout: 8000, maximumAge: 300000 }
-  );
-});
-
 /* ---------------- 启动 ---------------- */
-loadFavs();
-say("输入城市名，或使用当前位置。已收藏的城市在下方。");
+renderCities();
+say("选一座城市，或者拖动下面那条时间轴。");
+loadWeather(CITIES[0]);
 
-(async () => {
-  try {
-    const list = await geocode("武汉");
-    if (list.length) await loadWeather(list[0]);
-    else say("输入城市名开始。");
-  } catch (e){
-    say("网络不可用，天气数据可能加载失败。");
-  }
-})();
+/* 可以直接用 ?about=1 把技术说明打开（方便对外链接） */
+if (new URLSearchParams(location.search).get("about") === "1"){
+  setTimeout(openAbout, 600);
+}
 
 })();
 </script>
